@@ -174,7 +174,6 @@
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -210,7 +209,7 @@
   </div>
 
   <!-- 保存ボタン -->
-  <button id="saveButton" disabled><span>💾 MP3でドライブに保存</span></button>
+  <button id="saveButton" disabled><span>💾 ドライブに保存</span></button>
 
   <div id="status">マイクへのアクセスを許可してください 🎤</div>
   <audio id="audioPlayback" controls hidden></audio>
@@ -282,7 +281,7 @@
     const name = generateFileName();
     const el = document.getElementById('filenamePreview');
     el.innerHTML = name
-      ? `保存ファイル名: <span>${name}.mp3</span>`
+      ? `保存ファイル名: <span>${name}.webm</span>`
       : '区分と学生を選択するとファイル名が表示されます';
   }
 
@@ -322,7 +321,7 @@
         recordButton.disabled = false;
         stopButton.disabled   = true;
         saveButton.disabled   = false;
-        statusDisplay.textContent = '✅ 録音停止。再生確認後、MP3で保存してください。';
+        statusDisplay.textContent = '✅ 録音停止。再生確認後、保存してください。';
         statusDisplay.className = 'success';
         audioChunks = [];
       };
@@ -359,8 +358,8 @@
     studentSelect.disabled  = false;
   };
 
-  // ── MP3変換・保存 ──────────────────────────────────────
-  saveButton.onclick = async () => {
+  // ── 保存 ───────────────────────────────────────────────
+  saveButton.onclick = () => {
     if (!originalAudioBlob) {
       statusDisplay.textContent = '⚠️ 保存する録音データがありません。';
       return;
@@ -368,106 +367,53 @@
 
     const fileName = generateFileName();
     if (!fileName) {
-      statusDisplay.textContent = '⚠️ 区分と学生番号を確認してください。';
+      statusDisplay.textContent = '⚠️ 区分と学生を確認してください。';
       return;
     }
 
-    statusDisplay.textContent = '⏳ MP3にエンコード中... しばらくお待ちください。';
+    statusDisplay.textContent = '📤 ドライブに保存中...';
     statusDisplay.className = '';
-    saveButton.disabled    = true;
-    recordButton.disabled  = true;
+    saveButton.disabled     = true;
+    recordButton.disabled   = true;
     categorySelect.disabled = true;
-    studentIdInput.disabled = true;
+    studentSelect.disabled  = true;
 
-    try {
-      const mp3Blob = await encodeToMp3(originalAudioBlob);
-      statusDisplay.textContent = '📤 エンコード完了。ドライブに保存中...';
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        // google.script.run の代わりに fetch で GAS にPOST
-        fetch(GAS_URL, {
-          method: 'POST',
-          // Content-Type を省略 → text/plain 扱いでプリフライトなし
-          body: JSON.stringify({
-            audioDataUrl: reader.result,
-            baseFileName: fileName
-          })
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      fetch(GAS_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          audioDataUrl: reader.result,
+          baseFileName: fileName
         })
-        .then(res => res.json())
-        .then(response => {
-          if (response.success) {
-            statusDisplay.textContent = '🎉 ' + response.message;
-            statusDisplay.className = 'success';
-            saveButton.disabled = true;
-          } else {
-            statusDisplay.textContent = `❌ 保存失敗: ${response.message}`;
-            statusDisplay.className = '';
-            saveButton.disabled = false;
-          }
-          recordButton.disabled   = false;
-          categorySelect.disabled = false;
-          studentIdInput.disabled = false;
-        })
-        .catch(error => {
-          statusDisplay.textContent = `❌ 通信エラー: ${error.message}`;
+      })
+      .then(res => res.json())
+      .then(response => {
+        if (response.success) {
+          statusDisplay.textContent = '🎉 ' + response.message;
+          statusDisplay.className = 'success';
+          saveButton.disabled = true;
+        } else {
+          statusDisplay.textContent = `❌ 保存失敗: ${response.message}`;
           statusDisplay.className = '';
-          saveButton.disabled     = false;
-          recordButton.disabled   = false;
-          categorySelect.disabled = false;
-          studentIdInput.disabled = false;
-          console.error(error);
-        });
-      };
-      reader.readAsDataURL(mp3Blob);
-
-    } catch (error) {
-      console.error("MP3エンコードエラー:", error);
-      statusDisplay.textContent = `❌ MP3エンコードエラー: ${error.message}`;
-      statusDisplay.className = '';
-      saveButton.disabled     = false;
-      recordButton.disabled   = false;
-      categorySelect.disabled = false;
-      studentIdInput.disabled = false;
-    }
+          saveButton.disabled = false;
+        }
+        recordButton.disabled   = false;
+        categorySelect.disabled = false;
+        studentSelect.disabled  = false;
+      })
+      .catch(error => {
+        statusDisplay.textContent = `❌ 通信エラー: ${error.message}`;
+        statusDisplay.className = '';
+        saveButton.disabled     = false;
+        recordButton.disabled   = false;
+        categorySelect.disabled = false;
+        studentSelect.disabled  = false;
+        console.error(error);
+      });
+    };
+    reader.readAsDataURL(originalAudioBlob);
   };
-
-  // ── lamejs MP3エンコード ────────────────────────────────
-  async function encodeToMp3(audioBlob) {
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const arrayBuffer  = await audioBlob.arrayBuffer();
-    const audioBuffer  = await audioContext.decodeAudioData(arrayBuffer).catch(e => {
-      throw new Error("音声データのデコードに失敗しました: " + e.message);
-    });
-
-    const numChannels = audioBuffer.numberOfChannels;
-    const sampleRate  = audioBuffer.sampleRate;
-    const mp3encoder  = new lamejs.Mp3Encoder(numChannels, sampleRate, 128);
-    const mp3Data     = [];
-
-    const samplesLeft  = toInt16(audioBuffer.getChannelData(0));
-    const samplesRight = numChannels > 1 ? toInt16(audioBuffer.getChannelData(1)) : null;
-
-    const blockSize = 1152;
-    for (let i = 0; i < samplesLeft.length; i += blockSize) {
-      const L = samplesLeft.subarray(i, i + blockSize);
-      const R = samplesRight ? samplesRight.subarray(i, i + blockSize) : null;
-      const buf = numChannels === 1 ? mp3encoder.encodeBuffer(L) : mp3encoder.encodeBuffer(L, R);
-      if (buf.length > 0) mp3Data.push(buf);
-    }
-    const flush = mp3encoder.flush();
-    if (flush.length > 0) mp3Data.push(flush);
-
-    return new Blob(mp3Data, { type: 'audio/mpeg' });
-  }
-
-  function toInt16(floatArray) {
-    const int16 = new Int16Array(floatArray.length);
-    for (let i = 0; i < floatArray.length; i++) {
-      int16[i] = Math.max(-1, Math.min(1, floatArray[i])) * 32767;
-    }
-    return int16;
-  }
 </script>
 </body>
 </html>

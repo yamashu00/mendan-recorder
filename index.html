@@ -237,7 +237,7 @@
   let stream = null;
 
   // ── 生徒一覧を GAS から取得してドロップダウンに反映 ──────
-  fetch(GAS_URL + '?action=getStudents')
+  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents' }) })
     .then(res => res.json())
     .then(students => {
       studentSelect.innerHTML = '<option value="">-- 学生を選択してください --</option>';

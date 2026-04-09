@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>面談録音ツール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      min-height: 100vh;
+      color: #333;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      max-width: 550px;
+      margin: auto;
+      animation: slideIn 0.5s ease-out;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      color: #667eea;
+      text-align: center;
+      margin-bottom: 25px;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .input-group {
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #555;
+      font-size: 14px;
+    }
+
+    .input-group select,
+    .input-group input[type="number"] {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background: #f8f9fa;
+    }
+
+    .input-group select:focus,
+    .input-group input[type="number"]:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .filename-preview {
+      background: #f0f4ff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #4A5568;
+      margin-bottom: 20px;
+      min-height: 38px;
+      word-break: break-all;
+    }
+
+    .filename-preview span {
+      font-weight: 700;
+      color: #2B6CB0;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    button {
+      flex: 1;
+      color: white;
+      border: none;
+      padding: 14px 20px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 0; height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    button:hover::before { width: 300px; height: 300px; }
+
+    button span { position: relative; z-index: 1; }
+
+    #recordButton { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+    #recordButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(17,153,142,0.4); }
+
+    #stopButton { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); }
+    #stopButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238,9,121,0.4); }
+
+    #saveButton { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%; }
+    #saveButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+
+    button:disabled {
+      background: #cccccc !important;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+    button:disabled::before { display: none; }
+
+    #status {
+      margin-top: 20px;
+      padding: 15px;
+      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+      color: #333;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .recording {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%) !important;
+      color: white !important;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.02); }
+    }
+
+    .success {
+      background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%) !important;
+      color: white !important;
+    }
+
+    #audioPlayback {
+      width: 100%;
+      margin-top: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+</head>
+<body>
+<div class="container">
+  <h1>🎙️ 面談録音ツール</h1>
+
+  <!-- 区分 -->
+  <div class="input-group">
+    <label for="categorySelect">📋 区分を選択:</label>
+    <select id="categorySelect" onchange="updatePreview()">
+      <option value="">-- 区分を選択してください --</option>
+      <option value="学生面談">学生面談</option>
+      <option value="まるさぽ">まるさぽ</option>
+    </select>
+  </div>
+
+  <!-- 学生番号 -->
+  <div class="input-group">
+    <label for="studentIdInput">🔢 学籍番号（4桁）:</label>
+    <input type="number" id="studentIdInput" placeholder="例: 1024"
+           min="1000" max="9999" oninput="updatePreview()">
+  </div>
+
+  <!-- ファイル名プレビュー -->
+  <div class="filename-preview" id="filenamePreview">
+    区分と学生番号を入力するとファイル名が表示されます
+  </div>
+
+  <!-- 録音ボタン -->
+  <div class="button-group">
+    <button id="recordButton"><span>🔴 録音開始</span></button>
+    <button id="stopButton" disabled><span>⏹️ 停止</span></button>
+  </div>
+
+  <!-- 保存ボタン -->
+  <button id="saveButton" disabled><span>💾 MP3でドライブに保存</span></button>
+
+  <div id="status">マイクへのアクセスを許可してください 🎤</div>
+  <audio id="audioPlayback" controls hidden></audio>
+</div>
+
+<script>
+  // ============================================================
+  // 設定: GAS デプロイ後にウェブアプリURLを貼り付けてください
+  // ============================================================
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxyUSb1XF1T3BjNN2WI_mQ-gpYRKXyUpcSplAWoFcEjUiPXE5nalpv_pj-4Gp-o9C6v/exec';
+  // ============================================================
+
+  const recordButton   = document.getElementById('recordButton');
+  const stopButton     = document.getElementById('stopButton');
+  const saveButton     = document.getElementById('saveButton');
+  const statusDisplay  = document.getElementById('status');
+  const audioPlayback  = document.getElementById('audioPlayback');
+  const categorySelect = document.getElementById('categorySelect');
+  const studentIdInput = document.getElementById('studentIdInput');
+
+  let mediaRecorder;
+  let audioChunks = [];
+  let originalAudioBlob = null;
+  let stream = null;
+
+  // ── ファイル名生成 ──────────────────────────────────────
+  function generateFileName() {
+    const category  = categorySelect.value.trim();
+    const studentId = studentIdInput.value.trim();
+    if (!category || !studentId) return null;
+    const now = new Date();
+    const yy  = String(now.getFullYear()).slice(2);
+    const mm  = String(now.getMonth() + 1).padStart(2, '0');
+    const dd  = String(now.getDate()).padStart(2, '0');
+    return `${category}_${studentId}_${yy}${mm}${dd}`;
+  }
+
+  function updatePreview() {
+    const name = generateFileName();
+    const el = document.getElementById('filenamePreview');
+    el.innerHTML = name
+      ? `保存ファイル名: <span>${name}.mp3</span>`
+      : '区分と学生番号を入力するとファイル名が表示されます';
+  }
+
+  // ── 録音開始 ───────────────────────────────────────────
+  recordButton.onclick = async () => {
+    const category  = categorySelect.value.trim();
+    const studentId = studentIdInput.value.trim();
+
+    if (!category) {
+      statusDisplay.textContent = '⚠️ 区分を選択してください。';
+      statusDisplay.className = '';
+      return;
+    }
+    if (!studentId || studentId < 1000 || studentId > 9999) {
+      statusDisplay.textContent = '⚠️ 学籍番号を4桁で入力してください（1000〜9999）。';
+      statusDisplay.className = '';
+      return;
+    }
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const options = { mimeType: 'audio/webm;codecs=opus' };
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        delete options.mimeType;
+      }
+      mediaRecorder = new MediaRecorder(stream, options);
+
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        originalAudioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+        const audioUrl = URL.createObjectURL(originalAudioBlob);
+        audioPlayback.src = audioUrl;
+        audioPlayback.hidden = false;
+        recordButton.disabled = false;
+        stopButton.disabled   = true;
+        saveButton.disabled   = false;
+        statusDisplay.textContent = '✅ 録音停止。再生確認後、MP3で保存してください。';
+        statusDisplay.className = 'success';
+        audioChunks = [];
+      };
+
+      audioChunks = [];
+      mediaRecorder.start();
+      statusDisplay.textContent = '🎤 録音中... お話しください！';
+      statusDisplay.className = 'recording';
+      recordButton.disabled    = true;
+      stopButton.disabled      = false;
+      saveButton.disabled      = true;
+      categorySelect.disabled  = true;
+      studentIdInput.disabled  = true;
+      audioPlayback.hidden     = true;
+      audioPlayback.src        = '';
+
+    } catch (err) {
+      console.error("マイクアクセスエラー:", err);
+      statusDisplay.textContent = '❌ マイクにアクセスできませんでした。ブラウザの設定を確認してください。';
+      statusDisplay.className = '';
+    }
+  };
+
+  // ── 録音停止 ───────────────────────────────────────────
+  stopButton.onclick = () => {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+      mediaRecorder.stop();
+    }
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+    categorySelect.disabled = false;
+    studentIdInput.disabled = false;
+  };
+
+  // ── MP3変換・保存 ──────────────────────────────────────
+  saveButton.onclick = async () => {
+    if (!originalAudioBlob) {
+      statusDisplay.textContent = '⚠️ 保存する録音データがありません。';
+      return;
+    }
+
+    const fileName = generateFileName();
+    if (!fileName) {
+      statusDisplay.textContent = '⚠️ 区分と学生番号を確認してください。';
+      return;
+    }
+
+    statusDisplay.textContent = '⏳ MP3にエンコード中... しばらくお待ちください。';
+    statusDisplay.className = '';
+    saveButton.disabled    = true;
+    recordButton.disabled  = true;
+    categorySelect.disabled = true;
+    studentIdInput.disabled = true;
+
+    try {
+      const mp3Blob = await encodeToMp3(originalAudioBlob);
+      statusDisplay.textContent = '📤 エンコード完了。ドライブに保存中...';
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // google.script.run の代わりに fetch で GAS にPOST
+        fetch(GAS_URL, {
+          method: 'POST',
+          // Content-Type を省略 → text/plain 扱いでプリフライトなし
+          body: JSON.stringify({
+            audioDataUrl: reader.result,
+            baseFileName: fileName
+          })
+        })
+        .then(res => res.json())
+        .then(response => {
+          if (response.success) {
+            statusDisplay.textContent = '🎉 ' + response.message;
+            statusDisplay.className = 'success';
+            saveButton.disabled = true;
+          } else {
+            statusDisplay.textContent = `❌ 保存失敗: ${response.message}`;
+            statusDisplay.className = '';
+            saveButton.disabled = false;
+          }
+          recordButton.disabled   = false;
+          categorySelect.disabled = false;
+          studentIdInput.disabled = false;
+        })
+        .catch(error => {
+          statusDisplay.textContent = `❌ 通信エラー: ${error.message}`;
+          statusDisplay.className = '';
+          saveButton.disabled     = false;
+          recordButton.disabled   = false;
+          categorySelect.disabled = false;
+          studentIdInput.disabled = false;
+          console.error(error);
+        });
+      };
+      reader.readAsDataURL(mp3Blob);
+
+    } catch (error) {
+      console.error("MP3エンコードエラー:", error);
+      statusDisplay.textContent = `❌ MP3エンコードエラー: ${error.message}`;
+      statusDisplay.className = '';
+      saveButton.disabled     = false;
+      recordButton.disabled   = false;
+      categorySelect.disabled = false;
+      studentIdInput.disabled = false;
+    }
+  };
+
+  // ── lamejs MP3エンコード ────────────────────────────────
+  async function encodeToMp3(audioBlob) {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const arrayBuffer  = await audioBlob.arrayBuffer();
+    const audioBuffer  = await audioContext.decodeAudioData(arrayBuffer).catch(e => {
+      throw new Error("音声データのデコードに失敗しました: " + e.message);
+    });
+
+    const numChannels = audioBuffer.numberOfChannels;
+    const sampleRate  = audioBuffer.sampleRate;
+    const mp3encoder  = new lamejs.Mp3Encoder(numChannels, sampleRate, 128);
+    const mp3Data     = [];
+
+    const samplesLeft  = toInt16(audioBuffer.getChannelData(0));
+    const samplesRight = numChannels > 1 ? toInt16(audioBuffer.getChannelData(1)) : null;
+
+    const blockSize = 1152;
+    for (let i = 0; i < samplesLeft.length; i += blockSize) {
+      const L = samplesLeft.subarray(i, i + blockSize);
+      const R = samplesRight ? samplesRight.subarray(i, i + blockSize) : null;
+      const buf = numChannels === 1 ? mp3encoder.encodeBuffer(L) : mp3encoder.encodeBuffer(L, R);
+      if (buf.length > 0) mp3Data.push(buf);
+    }
+    const flush = mp3encoder.flush();
+    if (flush.length > 0) mp3Data.push(flush);
+
+    return new Blob(mp3Data, { type: 'audio/mpeg' });
+  }
+
+  function toInt16(floatArray) {
+    const int16 = new Int16Array(floatArray.length);
+    for (let i = 0; i < floatArray.length; i++) {
+      int16[i] = Math.max(-1, Math.min(1, floatArray[i])) * 32767;
+    }
+    return int16;
+  }
+</script>
+</body>
+</html>

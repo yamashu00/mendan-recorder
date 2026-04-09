@@ -185,21 +185,22 @@
     <label for="categorySelect">📋 区分を選択:</label>
     <select id="categorySelect" onchange="updatePreview()">
       <option value="">-- 区分を選択してください --</option>
-      <option value="学生面談">学生面談</option>
+      <option value="クラマネ面談">クラマネ面談</option>
       <option value="まるさぽ">まるさぽ</option>
     </select>
   </div>
 
-  <!-- 学生番号 -->
+  <!-- 学生選択 -->
   <div class="input-group">
-    <label for="studentIdInput">🔢 学籍番号（4桁）:</label>
-    <input type="number" id="studentIdInput" placeholder="例: 1024"
-           min="1000" max="9999" oninput="updatePreview()">
+    <label for="studentSelect">🎓 学生を選択:</label>
+    <select id="studentSelect" onchange="updatePreview()">
+      <option value="">-- 読み込み中... --</option>
+    </select>
   </div>
 
   <!-- ファイル名プレビュー -->
   <div class="filename-preview" id="filenamePreview">
-    区分と学生番号を入力するとファイル名が表示されます
+    区分と学生を選択するとファイル名が表示されます
   </div>
 
   <!-- 録音ボタン -->
@@ -228,17 +229,47 @@
   const statusDisplay  = document.getElementById('status');
   const audioPlayback  = document.getElementById('audioPlayback');
   const categorySelect = document.getElementById('categorySelect');
-  const studentIdInput = document.getElementById('studentIdInput');
+  const studentSelect  = document.getElementById('studentSelect');
 
   let mediaRecorder;
   let audioChunks = [];
   let originalAudioBlob = null;
   let stream = null;
 
+  // ── 生徒一覧を GAS から取得してドロップダウンに反映 ──────
+  fetch(GAS_URL + '?action=getStudents')
+    .then(res => res.json())
+    .then(students => {
+      studentSelect.innerHTML = '<option value="">-- 学生を選択してください --</option>';
+
+      // 学年でグループ化
+      const grades = {};
+      students.forEach(s => {
+        if (!grades[s.grade]) grades[s.grade] = [];
+        grades[s.grade].push(s);
+      });
+
+      // 学年順にoptgroupを生成
+      Object.keys(grades).sort().forEach(grade => {
+        const group = document.createElement('optgroup');
+        group.label = `${grade}年`;
+        grades[grade].forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.name;
+          group.appendChild(opt);
+        });
+        studentSelect.appendChild(group);
+      });
+    })
+    .catch(() => {
+      studentSelect.innerHTML = '<option value="">-- 読み込み失敗 --</option>';
+    });
+
   // ── ファイル名生成 ──────────────────────────────────────
   function generateFileName() {
     const category  = categorySelect.value.trim();
-    const studentId = studentIdInput.value.trim();
+    const studentId = studentSelect.value.trim();
     if (!category || !studentId) return null;
     const now = new Date();
     const yy  = String(now.getFullYear()).slice(2);
@@ -252,21 +283,21 @@
     const el = document.getElementById('filenamePreview');
     el.innerHTML = name
       ? `保存ファイル名: <span>${name}.mp3</span>`
-      : '区分と学生番号を入力するとファイル名が表示されます';
+      : '区分と学生を選択するとファイル名が表示されます';
   }
 
   // ── 録音開始 ───────────────────────────────────────────
   recordButton.onclick = async () => {
     const category  = categorySelect.value.trim();
-    const studentId = studentIdInput.value.trim();
+    const studentId = studentSelect.value.trim();
 
     if (!category) {
       statusDisplay.textContent = '⚠️ 区分を選択してください。';
       statusDisplay.className = '';
       return;
     }
-    if (!studentId || studentId < 1000 || studentId > 9999) {
-      statusDisplay.textContent = '⚠️ 学籍番号を4桁で入力してください（1000〜9999）。';
+    if (!studentId) {
+      statusDisplay.textContent = '⚠️ 学生を選択してください。';
       statusDisplay.className = '';
       return;
     }
@@ -304,7 +335,7 @@
       stopButton.disabled      = false;
       saveButton.disabled      = true;
       categorySelect.disabled  = true;
-      studentIdInput.disabled  = true;
+      studentSelect.disabled   = true;
       audioPlayback.hidden     = true;
       audioPlayback.src        = '';
 
@@ -325,7 +356,7 @@
       stream = null;
     }
     categorySelect.disabled = false;
-    studentIdInput.disabled = false;
+    studentSelect.disabled  = false;
   };
 
   // ── MP3変換・保存 ──────────────────────────────────────

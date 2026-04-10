@@ -12,19 +12,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* 🎨 神山まるごと高専 ブランディング・モノトーンデザイン */
     :root {
       --font-main: 'Noto Sans JP', sans-serif;
       --color-bg: #FFFFFF;
       --color-text: #000000;
-      --color-text-sub: #666666;
+      --color-text-sub: #888888;
       --color-border: #000000;
-      --color-border-sub: #E0E0E0;
-      --color-accent: #000000;
-      /* 黒塗り */
-      --color-btn-text: #FFFFFF;
-      /* 白文字 */
-      --color-gray-bg: #F5F5F5;
+      --color-gray-bg: #F8F8F8;
     }
 
     * {
@@ -34,112 +28,96 @@
     body {
       font-family: var(--font-main);
       margin: 0;
-      padding: 0;
+      padding: 60px 20px;
+      /* 上部にたっぷり余白 */
       background-color: var(--color-gray-bg);
-      /* 背景は薄いグレー */
       color: var(--color-text);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
+      display: block;
+      /* 中央寄せではなく上から並べる */
       -webkit-font-smoothing: antialiased;
     }
 
-    /* 📦 レイアウト: カード型、角丸なし、シャープなボーダー */
     .container {
       width: 100%;
       max-width: 500px;
       background-color: var(--color-bg);
-      padding: 60px 40px;
+      padding: 60px 45px;
       border: 2px solid var(--color-border);
-      border-radius: 0;
-      /* 角丸なし */
-      box-shadow: none;
-      /* グラデーション・影は完全撤廃 */
+      margin: 0 auto;
+      /* 中央寄せ */
     }
 
-    /* 🚩 ヘッダー: ロゴの雰囲気を再現 */
+    /* 🚩 ヘッダー: 円弧とテキストの配置を最適化 */
     header {
-      margin-bottom: 50px;
+      margin-bottom: 60px;
       position: relative;
     }
 
-    /* ロゴの円弧をCSSで再現 */
     .logo-arc {
       position: absolute;
-      top: -10px;
-      left: -15px;
-      width: 100px;
-      height: 100px;
-      border: 2px solid var(--color-border);
+      top: -35px;
+      /* 上に逃がす */
+      left: -20px;
+      width: 130px;
+      height: 130px;
+      border: 1px solid var(--color-border);
       border-radius: 50%;
       clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
-      /* 下半分を隠して円弧に */
       z-index: 0;
+      opacity: 0.8;
     }
 
     .header-text {
       position: relative;
       z-index: 1;
-      padding-top: 20px;
     }
 
-    /* 1行目: 英語正式名称 */
     .college-name-en {
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 500;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.25em;
       text-transform: uppercase;
       color: var(--color-text-sub);
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
-    /* 2行目: アプリ名 */
     h1 {
       font-size: 24px;
       font-weight: 700;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       margin: 0;
-      color: var(--color-text);
     }
 
     .header-line {
       width: 100%;
       height: 2px;
       background-color: var(--color-border);
-      margin-top: 15px;
+      margin-top: 25px;
     }
 
     .input-group {
-      margin-bottom: 30px;
+      margin-bottom: 35px;
     }
 
     .input-group label {
       display: block;
       margin-bottom: 12px;
       font-weight: 700;
-      font-size: 14px;
+      font-size: 13px;
       letter-spacing: 0.05em;
     }
 
     .input-group select,
     .input-group input {
       width: 100%;
-      padding: 15px;
-      border: 1px solid var(--color-border);
-      /* シャープなボーダー */
+      padding: 14px;
+      border: 1.5px solid var(--color-border);
       border-radius: 0;
-      /* 角を丸くしない */
-      font-size: 16px;
+      font-size: 15px;
       font-family: var(--font-main);
-      color: var(--color-text);
       background: var(--color-bg);
-      transition: all 0.2s ease;
-      -webkit-appearance: none;
-      /* デフォルトの矢印を消す（select用） */
     }
 
-    /* selectの矢印をカスタム（モノトーン・シャープ） */
     .select-wrapper {
       position: relative;
     }
@@ -150,36 +128,21 @@
       right: 15px;
       top: 50%;
       transform: translateY(-50%);
-      width: 0;
-      height: 0;
       border-left: 5px solid transparent;
       border-right: 5px solid transparent;
       border-top: 6px solid var(--color-text);
-      /* 黒い三角 */
       pointer-events: none;
     }
 
-    .input-group select:focus,
-    .input-group input:focus {
-      outline: none;
-      border-width: 2px;
-      /* フォーカス時は線を太く */
-    }
-
     .filename-preview {
-      border: 1px solid var(--color-border-sub);
-      background-color: var(--color-gray-bg);
-      padding: 15px;
-      font-size: 13px;
+      border: 1px solid #EEE;
+      background-color: #FAFAFA;
+      padding: 18px;
+      font-size: 12px;
       color: var(--color-text-sub);
-      margin-bottom: 30px;
-      min-height: 40px;
+      margin-bottom: 35px;
       text-align: center;
-    }
-
-    .filename-preview b {
-      color: var(--color-text);
-      font-weight: 500;
+      letter-spacing: 0.02em;
     }
 
     .button-group {
@@ -188,93 +151,66 @@
       margin: 30px 0;
     }
 
-    /* ⏹️ ボタン: 黒塗り・白文字・シンプルに統一 */
     button {
       flex: 1;
       background-color: var(--color-accent);
       color: var(--color-btn-text);
       border: 1px solid var(--color-border);
       border-radius: 0;
-      /* 角丸なし */
-      padding: 18px 20px;
-      font-size: 15px;
+      padding: 18px;
+      font-size: 14px;
       font-weight: 700;
       letter-spacing: 0.1em;
       cursor: pointer;
-      transition: all 0.2s ease;
       font-family: var(--font-main);
-      text-transform: uppercase;
+      transition: opacity 0.2s;
     }
 
     button:hover:not(:disabled) {
-      background-color: var(--college-name-en);
-      /* グレーに */
-      color: var(--color-accent);
-      border-color: var(--color-accent);
+      opacity: 0.7;
     }
 
     button:disabled {
-      background-color: var(--color-bg) !important;
-      color: #ccc !important;
-      border-color: #ccc !important;
+      background-color: #FFF !important;
+      color: #DDD !important;
+      border-color: #EEE !important;
       cursor: not-allowed;
     }
 
     #saveButton {
       width: 100%;
+      margin-top: 10px;
     }
 
     #status {
-      margin-top: 30px;
-      padding: 15px;
-      font-size: 12px;
-      font-weight: 400;
+      margin-top: 40px;
+      font-size: 11px;
       text-align: center;
       color: var(--color-text-sub);
-      border: 1px solid transparent;
+      letter-spacing: 0.05em;
     }
 
-    /* 録音中: 黒背景でパルスアニメーション */
     .recording-state {
       background-color: var(--color-accent) !important;
-      color: var(--color-btn-text) !important;
       animation: pulse-black 1.5s infinite;
     }
 
     @keyframes pulse-black {
       0% {
-        box-shadow: 0 0 0 0px rgba(0, 0, 0, 0.7);
+        opacity: 1;
       }
 
-      70% {
-        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
+      50% {
+        opacity: 0.6;
       }
 
       100% {
-        box-shadow: 0 0 0 0px rgba(0, 0, 0, 0);
+        opacity: 1;
       }
     }
 
     .hidden {
       display: none;
-    }
-
-    /* レスポンシブ */
-    @media (max-width: 500px) {
-      .container {
-        border: none;
-        padding: 40px 20px;
-      }
-
-      .logo-arc {
-        width: 80px;
-        height: 80px;
-        left: -10px;
-      }
-
-      h1 {
-        font-size: 20px;
-      }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
@@ -295,16 +231,16 @@
     <div id="loginView">
       <div class="input-group">
         <label>メールアドレス</label>
-        <input type="email" id="emailInput" placeholder="example@gmail.com">
+        <input type="email" id="emailInput" placeholder="example@kamiyama.ac.jp">
       </div>
-      <button id="otpRequestBtn">認証コード送信</button>
+      <button id="otpRequestBtn" style="max-width: 220px;">認証コード送信</button>
 
-      <div id="otpSection" class="hidden" style="margin-top:50px;">
+      <div id="otpSection" class="hidden" style="margin-top:40px;">
         <div class="input-group">
-          <label>認証コード (6桁)</label>
-          <input type="text" id="otpInput" maxlength="6" placeholder="123456">
+          <label>認証コード</label>
+          <input type="text" id="otpInput" maxlength="6">
         </div>
-        <button id="verifyBtn">ログイン</button>
+        <button id="verifyBtn" style="max-width: 220px;">ログイン</button>
       </div>
     </div>
 
@@ -323,7 +259,7 @@
         <label>学生</label>
         <div class="select-wrapper">
           <select id="studentSelect">
-            <option value="">-- 読み込み中 --</option>
+            <option value="">-- 選択してください --</option>
           </select>
         </div>
       </div>
@@ -334,22 +270,17 @@
         <button id="stopButton" disabled>停止</button>
       </div>
       <button id="saveButton" disabled>保存して送信</button>
-
-      <audio id="audioPlayback" controls class="hidden"
-        style="width:100%; margin-top:30px; border-radius:0; border: 1px solid #000;"></audio>
     </div>
 
-    <div id="status">システム初期化中...</div>
+    <div id="status"></div>
   </div>
 
   <script>
-    // ★GASのWebアプリURL
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyUSb1XF1T3BjNN2WI_mQ-gpYRKXyUpcSplAWoFcEjUiPXE5nalpv_pj-4Gp-o9C6v/exec";
 
     let els = {};
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
-    // 🚀 DOMContentLoaded: リロード対策
     document.addEventListener('DOMContentLoaded', () => {
       const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'studentSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
       ids.forEach(id => {
@@ -369,29 +300,26 @@
     });
 
     function updateStatus(msg) {
-      if (els.status) {
-        els.status.textContent = msg;
-      }
+      if (els.status) els.status.textContent = msg;
     }
 
-    // --- 認証・通信ロジック ---
     async function requestOTP() {
       const email = els.emailInput.value.trim();
       if (!email) return alert("メールアドレスを入力してください");
-      updateStatus("認証コード送信中...");
+      updateStatus("SENDING...");
       const res = await callGas({ action: 'requestOTP', email });
       if (res.success) {
         els.otpSection.classList.remove('hidden');
         updateStatus("認証コードを送信しました");
       } else {
-        updateStatus("エラー: " + res.message);
+        updateStatus("ERROR: " + res.message);
       }
     }
 
     async function verifyOTP() {
       const email = els.emailInput.value.trim();
       const otp = els.otpInput.value.trim();
-      updateStatus("認証中...");
+      updateStatus("VERIFYING...");
       const res = await callGas({ action: 'verifyOTP', email, otp });
       if (res.success) {
         localStorage.setItem('email', email);
@@ -412,12 +340,12 @@
       } else {
         els.loginView.classList.remove('hidden');
         els.mainView.classList.add('hidden');
-        updateStatus("ログインしてください");
+        updateStatus("LOGIN REQUIRED");
       }
     }
 
     async function loadStudents() {
-      updateStatus("学生リスト取得中...");
+      updateStatus("LOADING STUDENTS...");
       try {
         const res = await callGas({
           action: 'getStudents',
@@ -433,13 +361,13 @@
         res.forEach(s => {
           const opt = document.createElement('option');
           opt.value = s.id;
-          opt.textContent = `${s.id} ${s.name} (${s.grade})`;
+          opt.textContent = `${s.id} ${s.name}`;
           els.studentSelect.appendChild(opt);
         });
-        updateStatus("準備完了 ✓");
+        updateStatus("READY ✓");
         updatePreview();
       } catch (e) {
-        updateStatus("通信エラー。リロードしてください。");
+        updateStatus("CONNECTION ERROR");
       }
     }
 
@@ -449,7 +377,7 @@
       const now = new Date();
       const dateStr = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
       const fname = sid ? `${cat}_${sid}_${dateStr}.mp3` : "";
-      els.filenamePreview.innerHTML = fname ? `保存名: <b>${fname}</b>` : "区分と学生を選択してください";
+      els.filenamePreview.innerHTML = fname ? `FILE: <b>${fname}</b>` : "区分と学生を選択してください";
       return fname;
     }
 
@@ -462,24 +390,16 @@
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
           originalBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          els.audioPlayback.src = URL.createObjectURL(originalBlob);
-          els.audioPlayback.classList.remove('hidden');
           els.saveButton.disabled = false;
-
-          // 録音中状態を解除
           els.recordButton.classList.remove('recording-state');
           els.recordButton.textContent = '録音開始';
         };
-
         mediaRecorder.start();
-
-        // 録音中状態（パルスアニメーション）を適用
         els.recordButton.classList.add('recording-state');
-        els.recordButton.textContent = '録音中...';
-
+        els.recordButton.textContent = 'REC...';
         els.recordButton.disabled = true;
         els.stopButton.disabled = false;
-        updateStatus("マイク録音中...");
+        updateStatus("RECORDING...");
       } catch (e) {
         alert("マイクの使用を許可してください");
       }
@@ -489,12 +409,12 @@
       if (mediaRecorder) mediaRecorder.stop();
       if (stream) stream.getTracks().forEach(t => t.stop());
       els.stopButton.disabled = true;
-      updateStatus("録音停止。保存してください。");
+      updateStatus("STOPPED");
     }
 
     async function uploadAudio() {
       const fname = updatePreview().replace('.mp3', '');
-      updateStatus("保存中...（MP3変換中）");
+      updateStatus("SAVING...");
       els.saveButton.disabled = true;
       try {
         const mp3Blob = await encodeToMp3(originalBlob);
@@ -507,16 +427,15 @@
             sessionToken: localStorage.getItem('token')
           });
           if (res.success) {
-            updateStatus("保存完了！");
-            els.audioPlayback.classList.add('hidden');
+            updateStatus("COMPLETED ✓");
           } else {
-            updateStatus("エラー: " + res.message);
+            updateStatus("ERROR: " + res.message);
             els.saveButton.disabled = false;
           }
         };
         reader.readAsDataURL(mp3Blob);
       } catch (e) {
-        updateStatus("エラーが発生しました");
+        updateStatus("ERROR");
         els.saveButton.disabled = false;
       }
     }

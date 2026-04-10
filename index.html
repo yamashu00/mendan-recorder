@@ -5,21 +5,26 @@
   <base target="_top">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>面談録音ツール</title>
+  <title>面談録音ツール | Kamiyama Marugoto College</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
 
   <style>
-    /* 🎨 神山まるごと高専 モノトーン・ミニマルデザイン */
+    /* 🎨 神山まるごと高専 ブランディング・モノトーンデザイン */
     :root {
       --font-main: 'Noto Sans JP', sans-serif;
       --color-bg: #FFFFFF;
       --color-text: #000000;
+      --color-text-sub: #666666;
       --color-border: #000000;
+      --color-border-sub: #E0E0E0;
       --color-accent: #000000;
-      --color-hover: #FFFFFF;
+      /* 黒塗り */
+      --color-btn-text: #FFFFFF;
+      /* 白文字 */
+      --color-gray-bg: #F5F5F5;
     }
 
     * {
@@ -30,7 +35,8 @@
       font-family: var(--font-main);
       margin: 0;
       padding: 0;
-      background-color: var(--color-bg);
+      background-color: var(--color-gray-bg);
+      /* 背景は薄いグレー */
       color: var(--color-text);
       display: flex;
       justify-content: center;
@@ -39,20 +45,69 @@
       -webkit-font-smoothing: antialiased;
     }
 
+    /* 📦 レイアウト: カード型、角丸なし、シャープなボーダー */
     .container {
       width: 100%;
-      max-width: 480px;
-      padding: 40px 20px;
+      max-width: 500px;
+      background-color: var(--color-bg);
+      padding: 60px 40px;
+      border: 2px solid var(--color-border);
+      border-radius: 0;
+      /* 角丸なし */
+      box-shadow: none;
+      /* グラデーション・影は完全撤廃 */
     }
 
+    /* 🚩 ヘッダー: ロゴの雰囲気を再現 */
+    header {
+      margin-bottom: 50px;
+      position: relative;
+    }
+
+    /* ロゴの円弧をCSSで再現 */
+    .logo-arc {
+      position: absolute;
+      top: -10px;
+      left: -15px;
+      width: 100px;
+      height: 100px;
+      border: 2px solid var(--color-border);
+      border-radius: 50%;
+      clip-path: polygon(0 0, 100% 0, 100% 50%, 0 50%);
+      /* 下半分を隠して円弧に */
+      z-index: 0;
+    }
+
+    .header-text {
+      position: relative;
+      z-index: 1;
+      padding-top: 20px;
+    }
+
+    /* 1行目: 英語正式名称 */
+    .college-name-en {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-text-sub);
+      margin-bottom: 10px;
+    }
+
+    /* 2行目: アプリ名 */
     h1 {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 700;
       letter-spacing: 0.1em;
-      text-align: left;
-      margin-bottom: 40px;
-      border-bottom: 2px solid var(--color-border);
-      padding-bottom: 10px;
+      margin: 0;
+      color: var(--color-text);
+    }
+
+    .header-line {
+      width: 100%;
+      height: 2px;
+      background-color: var(--color-border);
+      margin-top: 15px;
     }
 
     .input-group {
@@ -61,7 +116,7 @@
 
     .input-group label {
       display: block;
-      margin-bottom: 10px;
+      margin-bottom: 12px;
       font-weight: 700;
       font-size: 14px;
       letter-spacing: 0.05em;
@@ -71,44 +126,52 @@
     .input-group input {
       width: 100%;
       padding: 15px;
-      border: 2px solid var(--color-border);
+      border: 1px solid var(--color-border);
+      /* シャープなボーダー */
       border-radius: 0;
       /* 角を丸くしない */
       font-size: 16px;
       font-family: var(--font-main);
       color: var(--color-text);
-      background: transparent;
+      background: var(--color-bg);
       transition: all 0.2s ease;
       -webkit-appearance: none;
       /* デフォルトの矢印を消す（select用） */
     }
 
-    /* selectの矢印をカスタムで追加（モノトーン） */
+    /* selectの矢印をカスタム（モノトーン・シャープ） */
     .select-wrapper {
       position: relative;
     }
 
     .select-wrapper::after {
-      content: '▼';
-      font-size: 10px;
+      content: '';
       position: absolute;
       right: 15px;
       top: 50%;
       transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--color-text);
+      /* 黒い三角 */
       pointer-events: none;
     }
 
     .input-group select:focus,
     .input-group input:focus {
       outline: none;
-      background-color: #f0f0f0;
+      border-width: 2px;
+      /* フォーカス時は線を太く */
     }
 
     .filename-preview {
-      border: 1px solid #ccc;
+      border: 1px solid var(--color-border-sub);
+      background-color: var(--color-gray-bg);
       padding: 15px;
       font-size: 13px;
-      color: #666;
+      color: var(--color-text-sub);
       margin-bottom: 30px;
       min-height: 40px;
       text-align: center;
@@ -125,93 +188,70 @@
       margin: 30px 0;
     }
 
+    /* ⏹️ ボタン: 黒塗り・白文字・シンプルに統一 */
     button {
       flex: 1;
-      border: 2px solid var(--color-border);
+      background-color: var(--color-accent);
+      color: var(--color-btn-text);
+      border: 1px solid var(--color-border);
       border-radius: 0;
-      /* 角丸をなくす */
-      padding: 16px 20px;
+      /* 角丸なし */
+      padding: 18px 20px;
       font-size: 15px;
       font-weight: 700;
       letter-spacing: 0.1em;
       cursor: pointer;
       transition: all 0.2s ease;
       font-family: var(--font-main);
+      text-transform: uppercase;
     }
 
-    /* 白ボタン（黒文字） */
-    #stopButton,
-    #verifyBtn,
-    #loadBtnPlaceholder {
-      background-color: var(--color-bg);
-      color: var(--color-text);
-    }
-
-    #stopButton:hover:not(:disabled),
-    #verifyBtn:hover:not(:disabled) {
-      background-color: #f0f0f0;
-    }
-
-    /* 黒ボタン（白文字） */
-    #recordButton,
-    #saveButton,
-    #otpRequestBtn {
-      background-color: var(--color-accent);
-      color: var(--color-bg);
-    }
-
-    #recordButton:hover:not(:disabled),
-    #saveButton:hover:not(:disabled),
-    #otpRequestBtn:hover:not(:disabled) {
-      background-color: var(--color-hover);
+    button:hover:not(:disabled) {
+      background-color: var(--college-name-en);
+      /* グレーに */
       color: var(--color-accent);
       border-color: var(--color-accent);
     }
 
     button:disabled {
-      border-color: #ccc !important;
-      color: #ccc !important;
       background-color: var(--color-bg) !important;
+      color: #ccc !important;
+      border-color: #ccc !important;
       cursor: not-allowed;
+    }
+
+    #saveButton {
+      width: 100%;
     }
 
     #status {
       margin-top: 30px;
       padding: 15px;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 400;
       text-align: center;
-      color: #666;
+      color: var(--color-text-sub);
       border: 1px solid transparent;
     }
 
-    /* 録音中アニメーション（黒い円の点滅） */
-    .recording {
-      position: relative;
+    /* 録音中: 黒背景でパルスアニメーション */
+    .recording-state {
+      background-color: var(--color-accent) !important;
+      color: var(--color-btn-text) !important;
+      animation: pulse-black 1.5s infinite;
     }
 
-    .recording::before {
-      content: '';
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      background-color: var(--color-accent);
-      border-radius: 50%;
-      margin-right: 10px;
-      animation: pulse-mono 1s infinite;
-    }
-
-    @keyframes pulse-mono {
+    @keyframes pulse-black {
       0% {
-        opacity: 1;
+        box-shadow: 0 0 0 0px rgba(0, 0, 0, 0.7);
       }
 
-      50% {
-        opacity: 0.3;
+      70% {
+        box-shadow: 0 0 0 10px rgba(0, 0, 0, 0);
       }
 
       100% {
-        opacity: 1;
+        box-shadow: 0 0 0 0px rgba(0, 0, 0, 0);
       }
     }
 
@@ -219,15 +259,21 @@
       display: none;
     }
 
-    /* レスポンシブ対応 */
-    @media (max-width: 480px) {
-      h1 {
-        font-size: 18px;
+    /* レスポンシブ */
+    @media (max-width: 500px) {
+      .container {
+        border: none;
+        padding: 40px 20px;
       }
 
-      button {
-        font-size: 14px;
-        padding: 14px 15px;
+      .logo-arc {
+        width: 80px;
+        height: 80px;
+        left: -10px;
+      }
+
+      h1 {
+        font-size: 20px;
       }
     }
   </style>
@@ -237,7 +283,14 @@
 <body>
 
   <div class="container">
-    <h1>面談録音ツール</h1>
+    <header>
+      <div class="logo-arc"></div>
+      <div class="header-text">
+        <div class="college-name-en">Kamiyama Marugoto College</div>
+        <h1>面談録音ツール</h1>
+      </div>
+      <div class="header-line"></div>
+    </header>
 
     <div id="loginView">
       <div class="input-group">
@@ -246,7 +299,7 @@
       </div>
       <button id="otpRequestBtn">認証コード送信</button>
 
-      <div id="otpSection" class="hidden" style="margin-top:40px;">
+      <div id="otpSection" class="hidden" style="margin-top:50px;">
         <div class="input-group">
           <label>認証コード (6桁)</label>
           <input type="text" id="otpInput" maxlength="6" placeholder="123456">
@@ -282,7 +335,8 @@
       </div>
       <button id="saveButton" disabled>保存して送信</button>
 
-      <audio id="audioPlayback" controls class="hidden" style="width:100%; margin-top:30px; border-radius:0;"></audio>
+      <audio id="audioPlayback" controls class="hidden"
+        style="width:100%; margin-top:30px; border-radius:0; border: 1px solid #000;"></audio>
     </div>
 
     <div id="status">システム初期化中...</div>
@@ -295,16 +349,14 @@
     let els = {};
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
-    // 🚀 DOMContentLoaded: HTMLのタグが準備できた瞬間に実行（リロード対策）
+    // 🚀 DOMContentLoaded: リロード対策
     document.addEventListener('DOMContentLoaded', () => {
       const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'studentSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
-
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) els[id] = el;
       });
 
-      // イベント登録
       if (els.otpRequestBtn) els.otpRequestBtn.onclick = requestOTP;
       if (els.verifyBtn) els.verifyBtn.onclick = verifyOTP;
       if (els.recordButton) els.recordButton.onclick = startRecording;
@@ -313,7 +365,6 @@
       if (els.categorySelect) els.categorySelect.onchange = updatePreview;
       if (els.studentSelect) els.studentSelect.onchange = updatePreview;
 
-      // 起動時のセッションチェック
       checkSession();
     });
 
@@ -414,10 +465,19 @@
           els.audioPlayback.src = URL.createObjectURL(originalBlob);
           els.audioPlayback.classList.remove('hidden');
           els.saveButton.disabled = false;
+
+          // 録音中状態を解除
+          els.recordButton.classList.remove('recording-state');
+          els.recordButton.textContent = '録音開始';
         };
+
         mediaRecorder.start();
+
+        // 録音中状態（パルスアニメーション）を適用
+        els.recordButton.classList.add('recording-state');
+        els.recordButton.textContent = '録音中...';
+
         els.recordButton.disabled = true;
-        els.recordButton.innerHTML = '<span class="recording">録音中...</span>';
         els.stopButton.disabled = false;
         updateStatus("マイク録音中...");
       } catch (e) {
@@ -428,8 +488,6 @@
     function stopRecording() {
       if (mediaRecorder) mediaRecorder.stop();
       if (stream) stream.getTracks().forEach(t => t.stop());
-      els.recordButton.disabled = false;
-      els.recordButton.textContent = '録音開始';
       els.stopButton.disabled = true;
       updateStatus("録音停止。保存してください。");
     }
@@ -449,7 +507,7 @@
             sessionToken: localStorage.getItem('token')
           });
           if (res.success) {
-            updateStatus("保存完了！夜間に自動で文字起こしされます。");
+            updateStatus("保存完了！");
             els.audioPlayback.classList.add('hidden');
           } else {
             updateStatus("エラー: " + res.message);

@@ -173,10 +173,78 @@
       border-radius: 12px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
+
+    /* ── ログイン画面 ── */
+    #loginScreen {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 40px 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      max-width: 400px;
+      margin: auto;
+      animation: slideIn 0.5s ease-out;
+      text-align: center;
+    }
+
+    #loginScreen h2 {
+      color: #667eea;
+      margin-bottom: 8px;
+      font-size: 24px;
+    }
+
+    #loginScreen p {
+      color: #666;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    #codeInput {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 18px;
+      letter-spacing: 2px;
+      text-align: center;
+      background: #f8f9fa;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+    }
+
+    #codeInput:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    #loginButton {
+      width: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    #loginError {
+      color: #e53e3e;
+      font-size: 13px;
+      margin-top: 10px;
+      min-height: 20px;
+    }
   </style>
 </head>
 <body>
-<div class="container">
+
+<!-- ログイン画面 -->
+<div id="loginScreen" style="display:none;">
+  <h2>🔐 面談録音ツール</h2>
+  <p>アクセスコードを入力してください</p>
+  <input type="text" id="codeInput" placeholder="コードを入力" autocomplete="off" spellcheck="false">
+  <button id="loginButton"><span>ログイン</span></button>
+  <div id="loginError"></div>
+</div>
+
+<!-- メインアプリ -->
+<div class="container" id="mainApp" style="display:none;">
   <h1>🎙️ 面談録音ツール</h1>
 
   <!-- 区分 -->
@@ -214,6 +282,7 @@
   <div id="status">マイクへのアクセスを許可してください 🎤</div>
   <audio id="audioPlayback" controls hidden></audio>
 </div>
+<!-- /メインアプリ -->
 
 <script>
   // ============================================================
@@ -221,6 +290,73 @@
   // ============================================================
   const GAS_URL = 'https://script.google.com/macros/s/AKfycbxyUSb1XF1T3BjNN2WI_mQ-gpYRKXyUpcSplAWoFcEjUiPXE5nalpv_pj-4Gp-o9C6v/exec';
   // ============================================================
+
+  // ── 認証処理 ────────────────────────────────────────────
+  const loginScreen = document.getElementById('loginScreen');
+  const mainApp     = document.getElementById('mainApp');
+  const codeInput   = document.getElementById('codeInput');
+  const loginButton = document.getElementById('loginButton');
+  const loginError  = document.getElementById('loginError');
+
+  function getAccessCode() {
+    return sessionStorage.getItem('accessCode');
+  }
+
+  function showLogin() {
+    loginScreen.style.display = 'block';
+    mainApp.style.display     = 'none';
+  }
+
+  function showApp() {
+    loginScreen.style.display = 'none';
+    mainApp.style.display     = 'block';
+  }
+
+  // ページ読み込み時: セッションにコードがあればそのまま表示
+  if (getAccessCode()) {
+    showApp();
+    loadStudents();
+  } else {
+    showLogin();
+  }
+
+  loginButton.onclick = () => {
+    const code = codeInput.value.trim();
+    if (!code) { loginError.textContent = 'コードを入力してください。'; return; }
+
+    loginButton.disabled     = true;
+    loginError.textContent   = '';
+    loginButton.querySelector('span').textContent = '確認中...';
+
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyCode', code }) })
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          sessionStorage.setItem('accessCode', code);
+          showApp();
+          loadStudents();
+        } else {
+          loginError.textContent = result.message || '無効なコードです。';
+          loginButton.disabled   = false;
+          loginButton.querySelector('span').textContent = 'ログイン';
+        }
+      })
+      .catch(() => {
+        loginError.textContent = '通信エラーが発生しました。';
+        loginButton.disabled   = false;
+        loginButton.querySelector('span').textContent = 'ログイン';
+      });
+  };
+
+  codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') loginButton.click(); });
+
+  // ── 認証エラー時にログイン画面へ戻す ────────────────────
+  function handleAuthError() {
+    sessionStorage.removeItem('accessCode');
+    showLogin();
+    codeInput.value        = '';
+    loginError.textContent = 'セッションが無効です。再度ログインしてください。';
+  }
 
   const recordButton   = document.getElementById('recordButton');
   const stopButton     = document.getElementById('stopButton');
@@ -236,34 +372,41 @@
   let stream = null;
 
   // ── 生徒一覧を GAS から取得してドロップダウンに反映 ──────
-  fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents' }) })
-    .then(res => res.json())
-    .then(students => {
-      studentSelect.innerHTML = '<option value="">-- 学生を選択してください --</option>';
+  function loadStudents() {
+    studentSelect.innerHTML = '<option value="">-- 読み込み中... --</option>';
 
-      // 学年でグループ化
-      const grades = {};
-      students.forEach(s => {
-        if (!grades[s.grade]) grades[s.grade] = [];
-        grades[s.grade].push(s);
-      });
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents', code: getAccessCode() }) })
+      .then(res => res.json())
+      .then(result => {
+        if (result.authError) { handleAuthError(); return; }
 
-      // 学年順にoptgroupを生成
-      Object.keys(grades).sort().forEach(grade => {
-        const group = document.createElement('optgroup');
-        group.label = `${grade}年`;
-        grades[grade].forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.textContent = s.name;
-          group.appendChild(opt);
+        const students = Array.isArray(result) ? result : [];
+        studentSelect.innerHTML = '<option value="">-- 学生を選択してください --</option>';
+
+        // 学年でグループ化
+        const grades = {};
+        students.forEach(s => {
+          if (!grades[s.grade]) grades[s.grade] = [];
+          grades[s.grade].push(s);
         });
-        studentSelect.appendChild(group);
+
+        // 学年順にoptgroupを生成
+        Object.keys(grades).sort().forEach(grade => {
+          const group = document.createElement('optgroup');
+          group.label = `${grade}年`;
+          grades[grade].forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            group.appendChild(opt);
+          });
+          studentSelect.appendChild(group);
+        });
+      })
+      .catch(() => {
+        studentSelect.innerHTML = '<option value="">-- 読み込み失敗 --</option>';
       });
-    })
-    .catch(() => {
-      studentSelect.innerHTML = '<option value="">-- 読み込み失敗 --</option>';
-    });
+  }
 
   // ── ファイル名生成 ──────────────────────────────────────
   function generateFileName() {
@@ -384,11 +527,13 @@
         method: 'POST',
         body: JSON.stringify({
           audioDataUrl: reader.result,
-          baseFileName: fileName
+          baseFileName: fileName,
+          code: getAccessCode()
         })
       })
       .then(res => res.json())
       .then(response => {
+        if (response.authError) { handleAuthError(); return; }
         if (response.success) {
           statusDisplay.textContent = '🎉 ' + response.message;
           statusDisplay.className = 'success';

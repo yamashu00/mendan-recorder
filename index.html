@@ -6,128 +6,208 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>面談録音ツール</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
+    /* 🎨 神山まるごと高専 モノトーン・ミニマルデザイン */
+    :root {
+      --font-main: 'Noto Sans JP', sans-serif;
+      --color-bg: #FFFFFF;
+      --color-text: #000000;
+      --color-border: #000000;
+      --color-accent: #000000;
+      --color-hover: #FFFFFF;
+    }
+
     * {
       box-sizing: border-box;
     }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
+      font-family: var(--font-main);
       margin: 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 0;
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
       min-height: 100vh;
-      color: #333;
+      -webkit-font-smoothing: antialiased;
     }
 
     .container {
-      background: rgba(255, 255, 255, 0.95);
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-      max-width: 500px;
-      margin: auto;
+      width: 100%;
+      max-width: 480px;
+      padding: 40px 20px;
     }
 
     h1 {
-      color: #667eea;
-      text-align: center;
-      font-size: 24px;
-      margin-bottom: 25px;
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-align: left;
+      margin-bottom: 40px;
+      border-bottom: 2px solid var(--color-border);
+      padding-bottom: 10px;
     }
 
     .input-group {
-      margin-bottom: 15px;
+      margin-bottom: 30px;
     }
 
     .input-group label {
       display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
+      margin-bottom: 10px;
+      font-weight: 700;
       font-size: 14px;
+      letter-spacing: 0.05em;
     }
 
-    select,
-    input {
+    .input-group select,
+    .input-group input {
       width: 100%;
-      padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 15px;
-      transition: 0.3s;
+      padding: 15px;
+      border: 2px solid var(--color-border);
+      border-radius: 0;
+      /* 角を丸くしない */
+      font-size: 16px;
+      font-family: var(--font-main);
+      color: var(--color-text);
+      background: transparent;
+      transition: all 0.2s ease;
+      -webkit-appearance: none;
+      /* デフォルトの矢印を消す（select用） */
+    }
+
+    /* selectの矢印をカスタムで追加（モノトーン） */
+    .select-wrapper {
+      position: relative;
+    }
+
+    .select-wrapper::after {
+      content: '▼';
+      font-size: 10px;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .input-group select:focus,
+    .input-group input:focus {
+      outline: none;
+      background-color: #f0f0f0;
     }
 
     .filename-preview {
-      background: #f0f4ff;
-      border-radius: 10px;
-      padding: 12px;
+      border: 1px solid #ccc;
+      padding: 15px;
       font-size: 13px;
-      color: #4A5568;
-      margin: 15px 0;
+      color: #666;
+      margin-bottom: 30px;
       min-height: 40px;
-      border-left: 4px solid #667eea;
+      text-align: center;
+    }
+
+    .filename-preview b {
+      color: var(--color-text);
+      font-weight: 500;
     }
 
     .button-group {
       display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
+      gap: 15px;
+      margin: 30px 0;
     }
 
     button {
       flex: 1;
-      padding: 14px;
-      border: none;
-      border-radius: 10px;
-      font-weight: 600;
+      border: 2px solid var(--color-border);
+      border-radius: 0;
+      /* 角丸をなくす */
+      padding: 16px 20px;
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
       cursor: pointer;
-      transition: 0.3s;
+      transition: all 0.2s ease;
+      font-family: var(--font-main);
     }
 
-    #recordButton {
-      background: #11998e;
-      color: white;
+    /* 白ボタン（黒文字） */
+    #stopButton,
+    #verifyBtn,
+    #loadBtnPlaceholder {
+      background-color: var(--color-bg);
+      color: var(--color-text);
     }
 
-    #stopButton {
-      background: #ee0979;
-      color: white;
+    #stopButton:hover:not(:disabled),
+    #verifyBtn:hover:not(:disabled) {
+      background-color: #f0f0f0;
     }
 
-    #saveButton {
-      background: #667eea;
-      color: white;
-      width: 100%;
+    /* 黒ボタン（白文字） */
+    #recordButton,
+    #saveButton,
+    #otpRequestBtn {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+
+    #recordButton:hover:not(:disabled),
+    #saveButton:hover:not(:disabled),
+    #otpRequestBtn:hover:not(:disabled) {
+      background-color: var(--color-hover);
+      color: var(--color-accent);
+      border-color: var(--color-accent);
     }
 
     button:disabled {
-      background: #ccc !important;
+      border-color: #ccc !important;
+      color: #ccc !important;
+      background-color: var(--color-bg) !important;
       cursor: not-allowed;
     }
 
     #status {
-      padding: 12px;
-      border-radius: 10px;
+      margin-top: 30px;
+      padding: 15px;
+      font-size: 13px;
+      font-weight: 400;
       text-align: center;
-      font-size: 14px;
-      font-weight: bold;
-      background: #eee;
-      margin-top: 10px;
+      color: #666;
+      border: 1px solid transparent;
     }
 
+    /* 録音中アニメーション（黒い円の点滅） */
     .recording {
-      background: #ff6b6b !important;
-      color: white;
-      animation: pulse 1.5s infinite;
+      position: relative;
     }
 
-    @keyframes pulse {
+    .recording::before {
+      content: '';
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background-color: var(--color-accent);
+      border-radius: 50%;
+      margin-right: 10px;
+      animation: pulse-mono 1s infinite;
+    }
+
+    @keyframes pulse-mono {
       0% {
         opacity: 1;
       }
 
       50% {
-        opacity: 0.7;
+        opacity: 0.3;
       }
 
       100% {
@@ -139,8 +219,16 @@
       display: none;
     }
 
-    b {
-      color: #2b6cb0;
+    /* レスポンシブ対応 */
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 18px;
+      }
+
+      button {
+        font-size: 14px;
+        padding: 14px 15px;
+      }
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
@@ -149,60 +237,65 @@
 <body>
 
   <div class="container">
-    <h1>🎙️ 面談録音ツール</h1>
+    <h1>面談録音ツール</h1>
 
     <div id="loginView">
       <div class="input-group">
         <label>メールアドレス</label>
         <input type="email" id="emailInput" placeholder="example@gmail.com">
       </div>
-      <button id="otpRequestBtn" style="background:#667eea; color:white; width:100%;">認証コード送信</button>
+      <button id="otpRequestBtn">認証コード送信</button>
 
-      <div id="otpSection" class="hidden" style="margin-top:20px;">
+      <div id="otpSection" class="hidden" style="margin-top:40px;">
         <div class="input-group">
           <label>認証コード (6桁)</label>
-          <input type="text" id="otpInput" maxlength="6">
+          <input type="text" id="otpInput" maxlength="6" placeholder="123456">
         </div>
-        <button id="verifyBtn" style="background:#11998e; color:white; width:100%;">ログイン</button>
+        <button id="verifyBtn">ログイン</button>
       </div>
     </div>
 
     <div id="mainView" class="hidden">
       <div class="input-group">
-        <label>📋 区分</label>
-        <select id="categorySelect">
-          <option value="学生面談">学生面談</option>
-          <option value="まるさぽ">まるさぽ</option>
-          <option value="クラマネ面談">クラマネ面談</option>
-        </select>
+        <label>区分</label>
+        <div class="select-wrapper">
+          <select id="categorySelect">
+            <option value="学生面談">学生面談</option>
+            <option value="まるさぽ">まるさぽ</option>
+            <option value="クラマネ面談">クラマネ面談</option>
+          </select>
+        </div>
       </div>
       <div class="input-group">
-        <label>👤 学生を選択</label>
-        <select id="studentSelect">
-          <option value="">-- 読み込み中 --</option>
-        </select>
+        <label>学生</label>
+        <div class="select-wrapper">
+          <select id="studentSelect">
+            <option value="">-- 読み込み中 --</option>
+          </select>
+        </div>
       </div>
       <div class="filename-preview" id="filenamePreview">区分と学生を選択してください</div>
 
       <div class="button-group">
-        <button id="recordButton">🔴 録音開始</button>
-        <button id="stopButton" disabled>⏹️ 停止</button>
+        <button id="recordButton">録音開始</button>
+        <button id="stopButton" disabled>停止</button>
       </div>
-      <button id="saveButton" disabled>💾 保存して送信</button>
+      <button id="saveButton" disabled>保存して送信</button>
 
-      <audio id="audioPlayback" controls class="hidden" style="width:100%; margin-top:15px;"></audio>
+      <audio id="audioPlayback" controls class="hidden" style="width:100%; margin-top:30px; border-radius:0;"></audio>
     </div>
 
-    <div id="status">システム準備中...</div>
+    <div id="status">システム初期化中...</div>
   </div>
 
   <script>
+    // ★GASのWebアプリURL
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyUSb1XF1T3BjNN2WI_mQ-gpYRKXyUpcSplAWoFcEjUiPXE5nalpv_pj-4Gp-o9C6v/exec";
 
     let els = {};
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
-    // DOMContentLoaded: HTMLの読み込みが完了した瞬間に実行
+    // 🚀 DOMContentLoaded: HTMLのタグが準備できた瞬間に実行（リロード対策）
     document.addEventListener('DOMContentLoaded', () => {
       const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'studentSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
 
@@ -220,17 +313,17 @@
       if (els.categorySelect) els.categorySelect.onchange = updatePreview;
       if (els.studentSelect) els.studentSelect.onchange = updatePreview;
 
-      // 初期起動処理
+      // 起動時のセッションチェック
       checkSession();
     });
 
-    function updateStatus(msg, type) {
+    function updateStatus(msg) {
       if (els.status) {
         els.status.textContent = msg;
-        els.status.className = type || '';
       }
     }
 
+    // --- 認証・通信ロジック ---
     async function requestOTP() {
       const email = els.emailInput.value.trim();
       if (!email) return alert("メールアドレスを入力してください");
@@ -280,13 +373,11 @@
           email: localStorage.getItem('email'),
           sessionToken: localStorage.getItem('token')
         });
-
         if (res.authError) {
           localStorage.clear();
           checkSession();
           return;
         }
-
         els.studentSelect.innerHTML = '<option value="">-- 選択してください --</option>';
         res.forEach(s => {
           const opt = document.createElement('option');
@@ -307,7 +398,7 @@
       const now = new Date();
       const dateStr = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
       const fname = sid ? `${cat}_${sid}_${dateStr}.mp3` : "";
-      els.filenamePreview.innerHTML = fname ? `保存名: <b>${fname}</b>` : "学生を選択してください";
+      els.filenamePreview.innerHTML = fname ? `保存名: <b>${fname}</b>` : "区分と学生を選択してください";
       return fname;
     }
 
@@ -326,9 +417,9 @@
         };
         mediaRecorder.start();
         els.recordButton.disabled = true;
-        els.recordButton.classList.add('recording');
+        els.recordButton.innerHTML = '<span class="recording">録音中...</span>';
         els.stopButton.disabled = false;
-        updateStatus("録音中...");
+        updateStatus("マイク録音中...");
       } catch (e) {
         alert("マイクの使用を許可してください");
       }
@@ -338,16 +429,15 @@
       if (mediaRecorder) mediaRecorder.stop();
       if (stream) stream.getTracks().forEach(t => t.stop());
       els.recordButton.disabled = false;
-      els.recordButton.classList.remove('recording');
+      els.recordButton.textContent = '録音開始';
       els.stopButton.disabled = true;
       updateStatus("録音停止。保存してください。");
     }
 
     async function uploadAudio() {
       const fname = updatePreview().replace('.mp3', '');
-      updateStatus("保存中...（変換に数秒かかります）");
+      updateStatus("保存中...（MP3変換中）");
       els.saveButton.disabled = true;
-
       try {
         const mp3Blob = await encodeToMp3(originalBlob);
         const reader = new FileReader();
@@ -359,10 +449,10 @@
             sessionToken: localStorage.getItem('token')
           });
           if (res.success) {
-            updateStatus("保存完了！", "success");
+            updateStatus("保存完了！夜間に自動で文字起こしされます。");
             els.audioPlayback.classList.add('hidden');
           } else {
-            updateStatus("保存失敗: " + res.message);
+            updateStatus("エラー: " + res.message);
             els.saveButton.disabled = false;
           }
         };

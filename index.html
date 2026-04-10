@@ -1,742 +1,408 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
+  <base target="_top">
   <meta charset="UTF-8">
-  <title>面談録音ツール — 神山まるごと高専</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>面談録音ツール</title>
   <style>
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
-      font-family: 'Noto Sans JP', sans-serif;
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      padding: 40px 20px;
-      background: #f2f2f2;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      color: #111;
+      color: #333;
     }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── 共通カード ── */
-    .card {
-      background: #fff;
-      border: 1px solid #111;
-      padding: 36px 32px;
-      max-width: 480px;
+    .container {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      max-width: 500px;
       margin: auto;
-      animation: fadeUp 0.3s ease-out;
     }
 
-    /* ── ヘッダー ── */
-    .app-header {
-      border-bottom: 2px solid #111;
-      padding-bottom: 16px;
-      margin-bottom: 28px;
+    h1 {
+      color: #667eea;
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 25px;
     }
 
-    .app-header-inner {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .logo-sm {
-      width: 60px;
-      height: auto;
-      flex-shrink: 0;
-    }
-
-    .app-header .school-name {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.1em;
-      color: #555;
-      margin: 0 0 4px;
-      text-transform: uppercase;
-    }
-
-    .app-header h1 {
-      font-size: 20px;
-      font-weight: 700;
-      margin: 0;
-      letter-spacing: -0.01em;
-    }
-
-    /* ── フォーム要素 ── */
     .input-group {
-      margin-bottom: 20px;
+      margin-bottom: 15px;
     }
 
     .input-group label {
       display: block;
-      margin-bottom: 6px;
-      font-weight: 500;
-      font-size: 12px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: #555;
-    }
-
-    .input-group select {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #111;
-      border-radius: 0;
+      margin-bottom: 5px;
+      font-weight: 600;
       font-size: 14px;
-      font-family: 'Noto Sans JP', sans-serif;
-      background: #fff;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23111' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 12px center;
-      cursor: pointer;
-      transition: background-color 0.15s;
     }
 
-    .input-group select:focus {
-      outline: 2px solid #111;
-      outline-offset: 1px;
+    select,
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: 0.3s;
     }
 
-    /* ── ファイル名プレビュー ── */
     .filename-preview {
-      background: #f2f2f2;
-      border-left: 3px solid #111;
-      padding: 10px 14px;
-      font-size: 12px;
-      font-family: monospace;
-      color: #333;
-      margin-bottom: 24px;
-      min-height: 36px;
-      word-break: break-all;
+      background: #f0f4ff;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      color: #4A5568;
+      margin: 15px 0;
+      min-height: 40px;
+      border-left: 4px solid #667eea;
     }
 
-    .filename-preview span { font-weight: 700; color: #111; }
-
-    /* ── ボタン ── */
     .button-group {
       display: flex;
-      gap: 8px;
-      margin: 0 0 10px;
+      gap: 10px;
+      margin-bottom: 15px;
     }
 
     button {
       flex: 1;
-      color: #fff;
-      background: #111;
-      border: 1px solid #111;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-weight: 700;
-      font-family: 'Noto Sans JP', sans-serif;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
       cursor: pointer;
-      border-radius: 0;
-      transition: background 0.15s, color 0.15s;
-      letter-spacing: 0.02em;
+      transition: 0.3s;
     }
 
-    button:hover:not(:disabled) {
-      background: #333;
+    #recordButton {
+      background: #11998e;
+      color: white;
+    }
+
+    #stopButton {
+      background: #ee0979;
+      color: white;
+    }
+
+    #saveButton {
+      background: #667eea;
+      color: white;
+      width: 100%;
     }
 
     button:disabled {
       background: #ccc !important;
-      border-color: #ccc !important;
-      color: #fff !important;
       cursor: not-allowed;
     }
 
-    #recordButton { background: #111; }
-    #stopButton   { background: #111; }
-    #saveButton   { width: 100%; margin-top: 0; }
-
-    /* ── ステータス ── */
     #status {
-      margin-top: 16px;
-      padding: 12px 14px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-      font-weight: 500;
-      color: #333;
+      padding: 12px;
+      border-radius: 10px;
       text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      background: #eee;
+      margin-top: 10px;
     }
 
     .recording {
-      border-color: #111 !important;
-      background: #111 !important;
-      color: #fff !important;
-      animation: pulse 1.2s ease-in-out infinite;
+      background: #ff6b6b !important;
+      color: white;
+      animation: pulse 1.5s infinite;
     }
 
     @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0.75; }
+      0% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.7;
+      }
+
+      100% {
+        opacity: 1;
+      }
     }
 
-    .success {
-      border-color: #111 !important;
-      background: #f2f2f2 !important;
-      color: #111 !important;
+    .hidden {
+      display: none;
     }
 
-    #audioPlayback {
-      width: 100%;
-      margin-top: 16px;
+    b {
+      color: #2b6cb0;
     }
-
-    /* ── ログイン画面 ── */
-    #loginScreen {
-      background: #fff;
-      border: 1px solid #111;
-      max-width: 400px;
-      margin: auto;
-      animation: fadeUp 0.3s ease-out;
-      overflow: hidden;
-    }
-
-    /* ロゴエリア */
-    .login-logo-area {
-      width: 100%;
-      line-height: 0;
-      border-bottom: 1px solid #e8e8e8;
-    }
-
-    .logo-full {
-      display: block;
-      width: 100%;
-    }
-
-    /* フォームエリア */
-    .login-content {
-      padding: 28px 32px 32px;
-      text-align: center;
-    }
-
-    #loginScreen h2 {
-      font-size: 18px;
-      font-weight: 700;
-      color: #111;
-      margin: 0 0 20px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #111;
-      text-align: left;
-    }
-
-    .login-desc {
-      color: #555;
-      font-size: 13px;
-      margin-bottom: 20px;
-      line-height: 1.7;
-      text-align: left;
-    }
-
-    .login-input {
-      width: 100%;
-      padding: 11px 12px;
-      border: 1px solid #111;
-      border-radius: 0;
-      font-size: 15px;
-      font-family: 'Noto Sans JP', sans-serif;
-      background: #fff;
-      margin-bottom: 12px;
-      transition: outline 0.15s;
-    }
-
-    .login-input:focus {
-      outline: 2px solid #111;
-      outline-offset: 1px;
-    }
-
-    #otpInput {
-      letter-spacing: 8px;
-      font-size: 24px;
-      text-align: center;
-      font-family: monospace;
-    }
-
-    .login-btn {
-      width: 100%;
-      margin-top: 4px;
-    }
-
-    .back-link {
-      display: inline-block;
-      margin-top: 16px;
-      font-size: 12px;
-      color: #555;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    #loginError {
-      color: #c00;
-      font-size: 12px;
-      margin-top: 12px;
-      min-height: 18px;
-      text-align: left;
-    }
-
-    /* ステップインジケーター */
-    .step-indicator {
-      display: flex;
-      justify-content: center;
-      gap: 6px;
-      margin-bottom: 20px;
-    }
-
-    .step-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: #ccc;
-      transition: background 0.2s;
-    }
-
-    .step-dot.active { background: #111; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 </head>
+
 <body>
 
-<!-- ログイン画面 -->
-<div id="loginScreen" style="display:none;">
+  <div class="container">
+    <h1>🎙️ 面談録音ツール</h1>
 
-  <!-- 神山まるごと高専ロゴ -->
-  <div class="login-logo-area">
-    <svg class="logo-full" viewBox="0 0 480 290" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <!-- 半円弧 -->
-      <path d="M 20 290 A 220 220 0 0 1 460 290" stroke="#111" stroke-width="3"/>
-      <!--
-        神山まるごと高専 — 縦書き 4列×2行（右から左へ読む）
-        列4: 神山  列3: まる  列2: ごと  列1: 高専
-      -->
-      <text x="180" y="244" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">神</text>
-      <text x="180" y="271" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">山</text>
+    <div id="loginView">
+      <div class="input-group">
+        <label>メールアドレス</label>
+        <input type="email" id="emailInput" placeholder="example@gmail.com">
+      </div>
+      <button id="otpRequestBtn" style="background:#667eea; color:white; width:100%;">認証コード送信</button>
 
-      <text x="152" y="244" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">ま</text>
-      <text x="152" y="271" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">る</text>
-
-      <text x="124" y="244" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">ご</text>
-      <text x="124" y="271" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">と</text>
-
-      <text x="96" y="244" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">高</text>
-      <text x="96" y="271" font-family="'Noto Sans JP',sans-serif" font-size="22" font-weight="700" fill="#111" text-anchor="middle">専</text>
-    </svg>
-  </div>
-
-  <!-- フォーム -->
-  <div class="login-content">
-    <h2>面談録音ツール</h2>
-
-    <div class="step-indicator">
-      <div class="step-dot active" id="dot1"></div>
-      <div class="step-dot" id="dot2"></div>
-    </div>
-
-    <!-- Step1: メール入力 -->
-    <div id="step1">
-      <p class="login-desc">登録済みのメールアドレスを入力してください。<br>認証コードを送信します。</p>
-      <input type="email" id="emailInput" class="login-input" placeholder="xxx@kamiyama.ac.jp" autocomplete="email">
-      <button id="sendOtpButton" class="login-btn"><span>認証コードを送信</span></button>
-    </div>
-
-    <!-- Step2: OTP入力 -->
-    <div id="step2" style="display:none;">
-      <p class="login-desc">メールに届いた<strong>6桁のコード</strong>を入力してください。<br><span id="sentEmailLabel" style="color:#555; font-weight:500;"></span></p>
-      <input type="text" id="otpInput" class="login-input" placeholder="000000" maxlength="6" autocomplete="one-time-code" inputmode="numeric">
-      <button id="verifyOtpButton" class="login-btn"><span>ログイン</span></button>
-      <span class="back-link" id="backToStep1">← メールアドレスを変更</span>
-    </div>
-
-    <div id="loginError"></div>
-  </div>
-</div>
-
-<!-- メインアプリ -->
-<div class="card" id="mainApp" style="display:none;">
-  <div class="app-header">
-    <div class="app-header-inner">
-      <!-- 小ロゴ（弧のみ） -->
-      <svg class="logo-sm" viewBox="0 0 80 52" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <path d="M 4 52 A 36 36 0 0 1 76 52" stroke="#111" stroke-width="2.5"/>
-      </svg>
-      <div>
-        <p class="school-name">Kamiyama Marugoto College</p>
-        <h1>面談録音ツール</h1>
+      <div id="otpSection" class="hidden" style="margin-top:20px;">
+        <div class="input-group">
+          <label>認証コード (6桁)</label>
+          <input type="text" id="otpInput" maxlength="6">
+        </div>
+        <button id="verifyBtn" style="background:#11998e; color:white; width:100%;">ログイン</button>
       </div>
     </div>
+
+    <div id="mainView" class="hidden">
+      <div class="input-group">
+        <label>📋 区分</label>
+        <select id="categorySelect">
+          <option value="学生面談">学生面談</option>
+          <option value="まるさぽ">まるさぽ</option>
+          <option value="クラマネ面談">クラマネ面談</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>👤 学生を選択</label>
+        <select id="studentSelect">
+          <option value="">-- 読み込み中 --</option>
+        </select>
+      </div>
+      <div class="filename-preview" id="filenamePreview">区分と学生を選択してください</div>
+
+      <div class="button-group">
+        <button id="recordButton">🔴 録音開始</button>
+        <button id="stopButton" disabled>⏹️ 停止</button>
+      </div>
+      <button id="saveButton" disabled>💾 保存して送信</button>
+
+      <audio id="audioPlayback" controls class="hidden" style="width:100%; margin-top:15px;"></audio>
+    </div>
+
+    <div id="status">システム準備中...</div>
   </div>
 
-  <!-- 区分 -->
-  <div class="input-group">
-    <label for="categorySelect">区分</label>
-    <select id="categorySelect" onchange="updatePreview()">
-      <option value="">-- 区分を選択してください --</option>
-      <option value="クラマネ面談">クラマネ面談</option>
-      <option value="まるさぽ">まるさぽ</option>
-    </select>
-  </div>
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyUSb1XF1T3BjNN2WI_mQ-gpYRKXyUpcSplAWoFcEjUiPXE5nalpv_pj-4Gp-o9C6v/exec";
 
-  <!-- 学生選択 -->
-  <div class="input-group">
-    <label for="studentSelect">学生</label>
-    <select id="studentSelect" onchange="updatePreview()">
-      <option value="">-- 読み込み中... --</option>
-    </select>
-  </div>
+    let els = {};
+    let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
-  <!-- ファイル名プレビュー -->
-  <div class="filename-preview" id="filenamePreview">
-    区分と学生を選択するとファイル名が表示されます
-  </div>
+    // DOMContentLoaded: HTMLの読み込みが完了した瞬間に実行
+    document.addEventListener('DOMContentLoaded', () => {
+      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'studentSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
 
-  <!-- 録音ボタン -->
-  <div class="button-group">
-    <button id="recordButton"><span>録音開始</span></button>
-    <button id="stopButton" disabled><span>停止</span></button>
-  </div>
-
-  <!-- 保存ボタン -->
-  <button id="saveButton" disabled><span>Drive に保存</span></button>
-
-  <div id="status">マイクへのアクセスを許可してください</div>
-  <audio id="audioPlayback" controls hidden></audio>
-</div>
-<!-- /メインアプリ -->
-
-<script>
-  // ============================================================
-  // 設定: GAS デプロイ後にウェブアプリURLを貼り付けてください
-  // ============================================================
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbxyUSb1XF1T3BjNN2WI_mQ-gpYRKXyUpcSplAWoFcEjUiPXE5nalpv_pj-4Gp-o9C6v/exec';
-  // ============================================================
-
-  // ── 認証処理 ────────────────────────────────────────────
-  const loginScreen    = document.getElementById('loginScreen');
-  const mainApp        = document.getElementById('mainApp');
-  const loginError     = document.getElementById('loginError');
-  const step1El        = document.getElementById('step1');
-  const step2El        = document.getElementById('step2');
-  const emailInput     = document.getElementById('emailInput');
-  const otpInput       = document.getElementById('otpInput');
-  const sendOtpButton  = document.getElementById('sendOtpButton');
-  const verifyOtpButton = document.getElementById('verifyOtpButton');
-  const sentEmailLabel = document.getElementById('sentEmailLabel');
-  const dot1           = document.getElementById('dot1');
-  const dot2           = document.getElementById('dot2');
-
-  function getSession() {
-    return {
-      email:        sessionStorage.getItem('sessionEmail'),
-      sessionToken: sessionStorage.getItem('sessionToken')
-    };
-  }
-
-  function showLogin(step) {
-    loginScreen.style.display = 'block';
-    mainApp.style.display     = 'none';
-    goToStep(step || 1);
-  }
-
-  function showApp() {
-    loginScreen.style.display = 'none';
-    mainApp.style.display     = 'block';
-  }
-
-  function goToStep(n) {
-    step1El.style.display = n === 1 ? 'block' : 'none';
-    step2El.style.display = n === 2 ? 'block' : 'none';
-    dot1.classList.toggle('active', n >= 1);
-    dot2.classList.toggle('active', n >= 2);
-    loginError.textContent = '';
-  }
-
-  function setButtonLoading(btn, loading, defaultLabel) {
-    btn.disabled = loading;
-    btn.querySelector('span').textContent = loading ? '送信中...' : defaultLabel;
-  }
-
-  // ページ読み込み時: セッションが残っていればそのまま表示
-  const { email: savedEmail, sessionToken: savedToken } = getSession();
-  if (savedEmail && savedToken) {
-    showApp();
-    loadStudents();
-  } else {
-    showLogin(1);
-  }
-
-  // Step1: メールアドレス送信
-  sendOtpButton.onclick = () => {
-    const email = emailInput.value.trim();
-    if (!email) { loginError.textContent = 'メールアドレスを入力してください。'; return; }
-
-    setButtonLoading(sendOtpButton, true, '認証コードを送信');
-    loginError.textContent = '';
-
-    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'requestOTP', email }) })
-      .then(res => res.json())
-      .then(result => {
-        setButtonLoading(sendOtpButton, false, '認証コードを送信');
-        if (result.success) {
-          sentEmailLabel.textContent = email;
-          goToStep(2);
-          otpInput.focus();
-        } else {
-          loginError.textContent = result.message || 'エラーが発生しました。';
-        }
-      })
-      .catch(() => {
-        setButtonLoading(sendOtpButton, false, '認証コードを送信');
-        loginError.textContent = '通信エラーが発生しました。';
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) els[id] = el;
       });
-  };
 
-  // Step2: OTP検証
-  verifyOtpButton.onclick = () => {
-    const email = emailInput.value.trim();
-    const otp   = otpInput.value.trim();
-    if (!otp) { loginError.textContent = '認証コードを入力してください。'; return; }
+      // イベント登録
+      if (els.otpRequestBtn) els.otpRequestBtn.onclick = requestOTP;
+      if (els.verifyBtn) els.verifyBtn.onclick = verifyOTP;
+      if (els.recordButton) els.recordButton.onclick = startRecording;
+      if (els.stopButton) els.stopButton.onclick = stopRecording;
+      if (els.saveButton) els.saveButton.onclick = uploadAudio;
+      if (els.categorySelect) els.categorySelect.onchange = updatePreview;
+      if (els.studentSelect) els.studentSelect.onchange = updatePreview;
 
-    setButtonLoading(verifyOtpButton, true, 'ログイン');
-    loginError.textContent = '';
+      // 初期起動処理
+      checkSession();
+    });
 
-    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyOTP', email, otp }) })
-      .then(res => res.json())
-      .then(result => {
-        setButtonLoading(verifyOtpButton, false, 'ログイン');
-        if (result.success) {
-          sessionStorage.setItem('sessionEmail', email);
-          sessionStorage.setItem('sessionToken', result.sessionToken);
-          showApp();
-          loadStudents();
-        } else {
-          loginError.textContent = result.message || '認証に失敗しました。';
-        }
-      })
-      .catch(() => {
-        setButtonLoading(verifyOtpButton, false, 'ログイン');
-        loginError.textContent = '通信エラーが発生しました。';
-      });
-  };
-
-  document.getElementById('backToStep1').onclick = () => goToStep(1);
-  emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendOtpButton.click(); });
-  otpInput.addEventListener('keydown',   e => { if (e.key === 'Enter') verifyOtpButton.click(); });
-
-  // ── 認証エラー時にログイン画面へ戻す ────────────────────
-  function handleAuthError() {
-    sessionStorage.removeItem('sessionEmail');
-    sessionStorage.removeItem('sessionToken');
-    showLogin(1);
-    loginError.textContent = 'セッションが無効です。再度ログインしてください。';
-  }
-
-  const recordButton   = document.getElementById('recordButton');
-  const stopButton     = document.getElementById('stopButton');
-  const saveButton     = document.getElementById('saveButton');
-  const statusDisplay  = document.getElementById('status');
-  const audioPlayback  = document.getElementById('audioPlayback');
-  const categorySelect = document.getElementById('categorySelect');
-  const studentSelect  = document.getElementById('studentSelect');
-
-  let mediaRecorder;
-  let audioChunks = [];
-  let originalAudioBlob = null;
-  let stream = null;
-
-  // ── 生徒一覧を GAS から取得してドロップダウンに反映 ──────
-  function loadStudents() {
-    studentSelect.innerHTML = '<option value="">-- 読み込み中... --</option>';
-
-    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents', ...getSession() }) })
-      .then(res => res.json())
-      .then(result => {
-        if (result.authError) { handleAuthError(); return; }
-
-        const students = Array.isArray(result) ? result : [];
-        studentSelect.innerHTML = '<option value="">-- 学生を選択してください --</option>';
-
-        // 学年でグループ化
-        const grades = {};
-        students.forEach(s => {
-          if (!grades[s.grade]) grades[s.grade] = [];
-          grades[s.grade].push(s);
-        });
-
-        // 学年順にoptgroupを生成
-        Object.keys(grades).sort().forEach(grade => {
-          const group = document.createElement('optgroup');
-          group.label = `${grade}年`;
-          grades[grade].forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.id;
-            opt.textContent = s.name;
-            group.appendChild(opt);
-          });
-          studentSelect.appendChild(group);
-        });
-      })
-      .catch(() => {
-        studentSelect.innerHTML = '<option value="">-- 読み込み失敗 --</option>';
-      });
-  }
-
-  // ── ファイル名生成 ──────────────────────────────────────
-  function generateFileName() {
-    const category  = categorySelect.value.trim();
-    const studentId = studentSelect.value.trim();
-    if (!category || !studentId) return null;
-    const now = new Date();
-    const yy  = String(now.getFullYear()).slice(2);
-    const mm  = String(now.getMonth() + 1).padStart(2, '0');
-    const dd  = String(now.getDate()).padStart(2, '0');
-    return `${category}_${studentId}_${yy}${mm}${dd}`;
-  }
-
-  function updatePreview() {
-    const name = generateFileName();
-    const el = document.getElementById('filenamePreview');
-    el.innerHTML = name
-      ? `保存ファイル名: <span>${name}.webm</span>`
-      : '区分と学生を選択するとファイル名が表示されます';
-  }
-
-  // ── 録音開始 ───────────────────────────────────────────
-  recordButton.onclick = async () => {
-    const category  = categorySelect.value.trim();
-    const studentId = studentSelect.value.trim();
-
-    if (!category) {
-      statusDisplay.textContent = '区分を選択してください。';
-      statusDisplay.className = '';
-      return;
-    }
-    if (!studentId) {
-      statusDisplay.textContent = '学生を選択してください。';
-      statusDisplay.className = '';
-      return;
-    }
-
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const options = { mimeType: 'audio/webm;codecs=opus' };
-      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-        delete options.mimeType;
+    function updateStatus(msg, type) {
+      if (els.status) {
+        els.status.textContent = msg;
+        els.status.className = type || '';
       }
-      mediaRecorder = new MediaRecorder(stream, options);
-
-      mediaRecorder.ondataavailable = event => {
-        audioChunks.push(event.data);
-      };
-
-      mediaRecorder.onstop = () => {
-        originalAudioBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
-        const audioUrl = URL.createObjectURL(originalAudioBlob);
-        audioPlayback.src = audioUrl;
-        audioPlayback.hidden = false;
-        recordButton.disabled = false;
-        stopButton.disabled   = true;
-        saveButton.disabled   = false;
-        statusDisplay.textContent = '録音停止。再生確認後、保存してください。';
-        statusDisplay.className = 'success';
-        audioChunks = [];
-      };
-
-      audioChunks = [];
-      mediaRecorder.start();
-      statusDisplay.textContent = '録音中...';
-      statusDisplay.className = 'recording';
-      recordButton.disabled    = true;
-      stopButton.disabled      = false;
-      saveButton.disabled      = true;
-      categorySelect.disabled  = true;
-      studentSelect.disabled   = true;
-      audioPlayback.hidden     = true;
-      audioPlayback.src        = '';
-
-    } catch (err) {
-      console.error("マイクアクセスエラー:", err);
-      statusDisplay.textContent = 'マイクにアクセスできませんでした。ブラウザの設定を確認してください。';
-      statusDisplay.className = '';
-    }
-  };
-
-  // ── 録音停止 ───────────────────────────────────────────
-  stopButton.onclick = () => {
-    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-      mediaRecorder.stop();
-    }
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      stream = null;
-    }
-    categorySelect.disabled = false;
-    studentSelect.disabled  = false;
-  };
-
-  // ── 保存 ───────────────────────────────────────────────
-  saveButton.onclick = () => {
-    if (!originalAudioBlob) {
-      statusDisplay.textContent = '保存する録音データがありません。';
-      return;
     }
 
-    const fileName = generateFileName();
-    if (!fileName) {
-      statusDisplay.textContent = '区分と学生を確認してください。';
-      return;
+    async function requestOTP() {
+      const email = els.emailInput.value.trim();
+      if (!email) return alert("メールアドレスを入力してください");
+      updateStatus("認証コード送信中...");
+      const res = await callGas({ action: 'requestOTP', email });
+      if (res.success) {
+        els.otpSection.classList.remove('hidden');
+        updateStatus("認証コードを送信しました");
+      } else {
+        updateStatus("エラー: " + res.message);
+      }
     }
 
-    statusDisplay.textContent = 'Drive に保存中...';
-    statusDisplay.className = '';
-    saveButton.disabled     = true;
-    recordButton.disabled   = true;
-    categorySelect.disabled = true;
-    studentSelect.disabled  = true;
+    async function verifyOTP() {
+      const email = els.emailInput.value.trim();
+      const otp = els.otpInput.value.trim();
+      updateStatus("認証中...");
+      const res = await callGas({ action: 'verifyOTP', email, otp });
+      if (res.success) {
+        localStorage.setItem('email', email);
+        localStorage.setItem('token', res.sessionToken);
+        checkSession();
+      } else {
+        updateStatus("認証コードが正しくありません");
+      }
+    }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      fetch(GAS_URL, {
-        method: 'POST',
-        body: JSON.stringify({
-          audioDataUrl: reader.result,
-          baseFileName: fileName,
-          ...getSession()
-        })
-      })
-      .then(res => res.json())
-      .then(response => {
-        if (response.authError) { handleAuthError(); return; }
-        if (response.success) {
-          statusDisplay.textContent = response.message;
-          statusDisplay.className = 'success';
-          saveButton.disabled = true;
-        } else {
-          statusDisplay.textContent = `保存失敗: ${response.message}`;
-          statusDisplay.className = '';
-          saveButton.disabled = false;
+    function checkSession() {
+      const email = localStorage.getItem('email');
+      const token = localStorage.getItem('token');
+      if (email && token) {
+        els.loginView.classList.add('hidden');
+        els.mainView.classList.remove('hidden');
+        loadStudents();
+      } else {
+        els.loginView.classList.remove('hidden');
+        els.mainView.classList.add('hidden');
+        updateStatus("ログインしてください");
+      }
+    }
+
+    async function loadStudents() {
+      updateStatus("学生リスト取得中...");
+      try {
+        const res = await callGas({
+          action: 'getStudents',
+          email: localStorage.getItem('email'),
+          sessionToken: localStorage.getItem('token')
+        });
+
+        if (res.authError) {
+          localStorage.clear();
+          checkSession();
+          return;
         }
-        recordButton.disabled   = false;
-        categorySelect.disabled = false;
-        studentSelect.disabled  = false;
-      })
-      .catch(error => {
-        statusDisplay.textContent = `通信エラー: ${error.message}`;
-        statusDisplay.className = '';
-        saveButton.disabled     = false;
-        recordButton.disabled   = false;
-        categorySelect.disabled = false;
-        studentSelect.disabled  = false;
-        console.error(error);
-      });
-    };
-    reader.readAsDataURL(originalAudioBlob);
-  };
-</script>
+
+        els.studentSelect.innerHTML = '<option value="">-- 選択してください --</option>';
+        res.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = `${s.id} ${s.name} (${s.grade})`;
+          els.studentSelect.appendChild(opt);
+        });
+        updateStatus("準備完了 ✓");
+        updatePreview();
+      } catch (e) {
+        updateStatus("通信エラー。リロードしてください。");
+      }
+    }
+
+    function updatePreview() {
+      const cat = els.categorySelect.value;
+      const sid = els.studentSelect.value;
+      const now = new Date();
+      const dateStr = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+      const fname = sid ? `${cat}_${sid}_${dateStr}.mp3` : "";
+      els.filenamePreview.innerHTML = fname ? `保存名: <b>${fname}</b>` : "学生を選択してください";
+      return fname;
+    }
+
+    async function startRecording() {
+      if (!els.studentSelect.value) return alert("学生を選択してください");
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+          originalBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          els.audioPlayback.src = URL.createObjectURL(originalBlob);
+          els.audioPlayback.classList.remove('hidden');
+          els.saveButton.disabled = false;
+        };
+        mediaRecorder.start();
+        els.recordButton.disabled = true;
+        els.recordButton.classList.add('recording');
+        els.stopButton.disabled = false;
+        updateStatus("録音中...");
+      } catch (e) {
+        alert("マイクの使用を許可してください");
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder) mediaRecorder.stop();
+      if (stream) stream.getTracks().forEach(t => t.stop());
+      els.recordButton.disabled = false;
+      els.recordButton.classList.remove('recording');
+      els.stopButton.disabled = true;
+      updateStatus("録音停止。保存してください。");
+    }
+
+    async function uploadAudio() {
+      const fname = updatePreview().replace('.mp3', '');
+      updateStatus("保存中...（変換に数秒かかります）");
+      els.saveButton.disabled = true;
+
+      try {
+        const mp3Blob = await encodeToMp3(originalBlob);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const res = await callGas({
+            audioDataUrl: reader.result,
+            baseFileName: fname,
+            email: localStorage.getItem('email'),
+            sessionToken: localStorage.getItem('token')
+          });
+          if (res.success) {
+            updateStatus("保存完了！", "success");
+            els.audioPlayback.classList.add('hidden');
+          } else {
+            updateStatus("保存失敗: " + res.message);
+            els.saveButton.disabled = false;
+          }
+        };
+        reader.readAsDataURL(mp3Blob);
+      } catch (e) {
+        updateStatus("エラーが発生しました");
+        els.saveButton.disabled = false;
+      }
+    }
+
+    async function callGas(data) {
+      const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(data) });
+      return res.json();
+    }
+
+    async function encodeToMp3(blob) {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      const encoder = new lamejs.Mp3Encoder(buf.numberOfChannels, buf.sampleRate, 128);
+      const mp3Data = [];
+      const l = toInt16(buf.getChannelData(0));
+      const r = buf.numberOfChannels > 1 ? toInt16(buf.getChannelData(1)) : null;
+      const size = 1152;
+      for (let i = 0; i < l.length; i += size) {
+        const lb = l.subarray(i, i + size);
+        const rb = r ? r.subarray(i, i + size) : null;
+        const mp3 = r ? encoder.encodeBuffer(lb, rb) : encoder.encodeBuffer(lb);
+        if (mp3.length > 0) mp3Data.push(mp3);
+      }
+      const flush = encoder.flush();
+      if (flush.length > 0) mp3Data.push(flush);
+      return new Blob(mp3Data, { type: 'audio/mpeg' });
+    }
+
+    function toInt16(arr) {
+      const res = new Int16Array(arr.length);
+      for (let i = 0; i < arr.length; i++) res[i] = Math.max(-1, Math.min(1, arr[i])) * 32767;
+      return res;
+    }
+  </script>
 </body>
+
 </html>

@@ -1,255 +1,325 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>面談録音ツール</title>
+  <title>面談録音ツール — 神山まるごと高専</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
 
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Noto Sans JP', sans-serif;
       margin: 0;
-      padding: 20px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      padding: 40px 20px;
+      background: #f2f2f2;
       min-height: 100vh;
-      color: #333;
+      color: #111;
     }
 
-    .container {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
-      max-width: 550px;
-      margin: auto;
-      animation: slideIn 0.5s ease-out;
-    }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(-20px); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    h1 {
-      color: #667eea;
-      text-align: center;
-      margin-bottom: 25px;
-      font-size: 28px;
-      font-weight: 700;
+    /* ── 共通カード ── */
+    .card {
+      background: #fff;
+      border: 1px solid #111;
+      padding: 36px 32px;
+      max-width: 480px;
+      margin: auto;
+      animation: fadeUp 0.3s ease-out;
     }
 
+    /* ── ヘッダー ── */
+    .app-header {
+      border-bottom: 2px solid #111;
+      padding-bottom: 16px;
+      margin-bottom: 28px;
+    }
+
+    .app-header .school-name {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      color: #555;
+      margin: 0 0 4px;
+      text-transform: uppercase;
+    }
+
+    .app-header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── フォーム要素 ── */
     .input-group {
       margin-bottom: 20px;
     }
 
     .input-group label {
       display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
+      margin-bottom: 6px;
+      font-weight: 500;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
       color: #555;
-      font-size: 14px;
     }
 
-    .input-group select,
-    .input-group input[type="number"] {
+    .input-group select {
       width: 100%;
-      padding: 12px 15px;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 15px;
-      transition: all 0.3s ease;
-      background: #f8f9fa;
-    }
-
-    .input-group select:focus,
-    .input-group input[type="number"]:focus {
-      outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .filename-preview {
-      background: #f0f4ff;
-      border-radius: 10px;
-      padding: 10px 14px;
+      padding: 10px 12px;
+      border: 1px solid #111;
+      border-radius: 0;
       font-size: 14px;
-      color: #4A5568;
-      margin-bottom: 20px;
-      min-height: 38px;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #fff;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23111' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+      cursor: pointer;
+      transition: background-color 0.15s;
+    }
+
+    .input-group select:focus {
+      outline: 2px solid #111;
+      outline-offset: 1px;
+    }
+
+    /* ── ファイル名プレビュー ── */
+    .filename-preview {
+      background: #f2f2f2;
+      border-left: 3px solid #111;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #333;
+      margin-bottom: 24px;
+      min-height: 36px;
       word-break: break-all;
     }
 
-    .filename-preview span {
-      font-weight: 700;
-      color: #2B6CB0;
-    }
+    .filename-preview span { font-weight: 700; color: #111; }
 
+    /* ── ボタン ── */
     .button-group {
       display: flex;
-      gap: 10px;
-      margin: 20px 0;
+      gap: 8px;
+      margin: 0 0 10px;
     }
 
     button {
       flex: 1;
-      color: white;
-      border: none;
-      padding: 14px 20px;
-      font-size: 16px;
-      font-weight: 600;
+      color: #fff;
+      background: #111;
+      border: 1px solid #111;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 700;
+      font-family: 'Noto Sans JP', sans-serif;
       cursor: pointer;
-      border-radius: 12px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-      position: relative;
-      overflow: hidden;
+      border-radius: 0;
+      transition: background 0.15s, color 0.15s;
+      letter-spacing: 0.02em;
     }
 
-    button::before {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 0; height: 0;
-      border-radius: 50%;
-      background: rgba(255,255,255,0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
+    button:hover:not(:disabled) {
+      background: #333;
     }
-
-    button:hover::before { width: 300px; height: 300px; }
-
-    button span { position: relative; z-index: 1; }
-
-    #recordButton { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
-    #recordButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(17,153,142,0.4); }
-
-    #stopButton { background: linear-gradient(135deg, #ee0979 0%, #ff6a00 100%); }
-    #stopButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238,9,121,0.4); }
-
-    #saveButton { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); width: 100%; }
-    #saveButton:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
 
     button:disabled {
-      background: #cccccc !important;
+      background: #ccc !important;
+      border-color: #ccc !important;
+      color: #fff !important;
       cursor: not-allowed;
-      transform: none !important;
-      box-shadow: none !important;
     }
-    button:disabled::before { display: none; }
 
+    #recordButton { background: #111; }
+    #stopButton   { background: #111; }
+    #saveButton   { width: 100%; margin-top: 0; }
+
+    /* ── ステータス ── */
     #status {
-      margin-top: 20px;
-      padding: 15px;
-      background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-      border-radius: 12px;
-      text-align: center;
-      font-weight: 600;
+      margin-top: 16px;
+      padding: 12px 14px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+      font-weight: 500;
       color: #333;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
     }
 
     .recording {
-      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%) !important;
-      color: white !important;
-      animation: pulse 1.5s ease-in-out infinite;
+      border-color: #111 !important;
+      background: #111 !important;
+      color: #fff !important;
+      animation: pulse 1.2s ease-in-out infinite;
     }
 
     @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50%       { transform: scale(1.02); }
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.75; }
     }
 
     .success {
-      background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%) !important;
-      color: white !important;
+      border-color: #111 !important;
+      background: #f2f2f2 !important;
+      color: #111 !important;
     }
 
     #audioPlayback {
       width: 100%;
-      margin-top: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-top: 16px;
     }
 
     /* ── ログイン画面 ── */
     #loginScreen {
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 40px 30px;
-      border-radius: 20px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      background: #fff;
+      border: 1px solid #111;
+      padding: 40px 32px;
       max-width: 400px;
       margin: auto;
-      animation: slideIn 0.5s ease-out;
+      animation: fadeUp 0.3s ease-out;
       text-align: center;
+    }
+
+    .login-logo {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #555;
+      margin: 0 0 8px;
     }
 
     #loginScreen h2 {
-      color: #667eea;
-      margin-bottom: 8px;
+      font-size: 20px;
+      font-weight: 700;
+      color: #111;
+      margin: 0 0 28px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #111;
+    }
+
+    .login-desc {
+      color: #555;
+      font-size: 13px;
+      margin-bottom: 20px;
+      line-height: 1.7;
+      text-align: left;
+    }
+
+    .login-input {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #111;
+      border-radius: 0;
+      font-size: 15px;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #fff;
+      margin-bottom: 12px;
+      transition: outline 0.15s;
+    }
+
+    .login-input:focus {
+      outline: 2px solid #111;
+      outline-offset: 1px;
+    }
+
+    #otpInput {
+      letter-spacing: 8px;
       font-size: 24px;
-    }
-
-    #loginScreen p {
-      color: #666;
-      font-size: 14px;
-      margin-bottom: 24px;
-    }
-
-    #codeInput {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid #e0e0e0;
-      border-radius: 12px;
-      font-size: 18px;
-      letter-spacing: 2px;
       text-align: center;
-      background: #f8f9fa;
-      margin-bottom: 16px;
-      transition: all 0.3s ease;
+      font-family: monospace;
     }
 
-    #codeInput:focus {
-      outline: none;
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    #loginButton {
+    .login-btn {
       width: 100%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      margin-top: 4px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-top: 16px;
+      font-size: 12px;
+      color: #555;
+      cursor: pointer;
+      text-decoration: underline;
     }
 
     #loginError {
-      color: #e53e3e;
-      font-size: 13px;
-      margin-top: 10px;
-      min-height: 20px;
+      color: #c00;
+      font-size: 12px;
+      margin-top: 12px;
+      min-height: 18px;
+      text-align: left;
     }
+
+    /* ステップインジケーター */
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    .step-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: #ccc;
+      transition: background 0.2s;
+    }
+
+    .step-dot.active { background: #111; }
   </style>
 </head>
 <body>
 
 <!-- ログイン画面 -->
 <div id="loginScreen" style="display:none;">
-  <h2>🔐 面談録音ツール</h2>
-  <p>アクセスコードを入力してください</p>
-  <input type="text" id="codeInput" placeholder="コードを入力" autocomplete="off" spellcheck="false">
-  <button id="loginButton"><span>ログイン</span></button>
+  <p class="login-logo">Kamiyama Marugoto College</p>
+  <h2>面談録音ツール</h2>
+
+  <div class="step-indicator">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+  </div>
+
+  <!-- Step1: メール入力 -->
+  <div id="step1">
+    <p class="login-desc">登録済みのメールアドレスを入力してください。<br>認証コードを送信します。</p>
+    <input type="email" id="emailInput" class="login-input" placeholder="xxx@kamiyama.ac.jp" autocomplete="email">
+    <button id="sendOtpButton" class="login-btn"><span>認証コードを送信</span></button>
+  </div>
+
+  <!-- Step2: OTP入力 -->
+  <div id="step2" style="display:none;">
+    <p class="login-desc">メールに届いた<strong>6桁のコード</strong>を入力してください。<br><span id="sentEmailLabel" style="color:#667eea;"></span></p>
+    <input type="text" id="otpInput" class="login-input" placeholder="000000" maxlength="6" autocomplete="one-time-code" inputmode="numeric">
+    <button id="verifyOtpButton" class="login-btn"><span>ログイン</span></button>
+    <span class="back-link" id="backToStep1">← メールアドレスを変更</span>
+  </div>
+
   <div id="loginError"></div>
 </div>
 
 <!-- メインアプリ -->
-<div class="container" id="mainApp" style="display:none;">
-  <h1>🎙️ 面談録音ツール</h1>
+<div class="card" id="mainApp" style="display:none;">
+  <div class="app-header">
+    <p class="school-name">Kamiyama Marugoto College</p>
+    <h1>面談録音ツール</h1>
+  </div>
 
   <!-- 区分 -->
   <div class="input-group">
-    <label for="categorySelect">📋 区分を選択:</label>
+    <label for="categorySelect">区分</label>
     <select id="categorySelect" onchange="updatePreview()">
       <option value="">-- 区分を選択してください --</option>
       <option value="クラマネ面談">クラマネ面談</option>
@@ -259,7 +329,7 @@
 
   <!-- 学生選択 -->
   <div class="input-group">
-    <label for="studentSelect">🎓 学生を選択:</label>
+    <label for="studentSelect">学生</label>
     <select id="studentSelect" onchange="updatePreview()">
       <option value="">-- 読み込み中... --</option>
     </select>
@@ -272,14 +342,14 @@
 
   <!-- 録音ボタン -->
   <div class="button-group">
-    <button id="recordButton"><span>🔴 録音開始</span></button>
-    <button id="stopButton" disabled><span>⏹️ 停止</span></button>
+    <button id="recordButton"><span>録音開始</span></button>
+    <button id="stopButton" disabled><span>停止</span></button>
   </div>
 
   <!-- 保存ボタン -->
-  <button id="saveButton" disabled><span>💾 ドライブに保存</span></button>
+  <button id="saveButton" disabled><span>Drive に保存</span></button>
 
-  <div id="status">マイクへのアクセスを許可してください 🎤</div>
+  <div id="status">マイクへのアクセスを許可してください</div>
   <audio id="audioPlayback" controls hidden></audio>
 </div>
 <!-- /メインアプリ -->
@@ -292,19 +362,30 @@
   // ============================================================
 
   // ── 認証処理 ────────────────────────────────────────────
-  const loginScreen = document.getElementById('loginScreen');
-  const mainApp     = document.getElementById('mainApp');
-  const codeInput   = document.getElementById('codeInput');
-  const loginButton = document.getElementById('loginButton');
-  const loginError  = document.getElementById('loginError');
+  const loginScreen    = document.getElementById('loginScreen');
+  const mainApp        = document.getElementById('mainApp');
+  const loginError     = document.getElementById('loginError');
+  const step1El        = document.getElementById('step1');
+  const step2El        = document.getElementById('step2');
+  const emailInput     = document.getElementById('emailInput');
+  const otpInput       = document.getElementById('otpInput');
+  const sendOtpButton  = document.getElementById('sendOtpButton');
+  const verifyOtpButton = document.getElementById('verifyOtpButton');
+  const sentEmailLabel = document.getElementById('sentEmailLabel');
+  const dot1           = document.getElementById('dot1');
+  const dot2           = document.getElementById('dot2');
 
-  function getAccessCode() {
-    return sessionStorage.getItem('accessCode');
+  function getSession() {
+    return {
+      email:        sessionStorage.getItem('sessionEmail'),
+      sessionToken: sessionStorage.getItem('sessionToken')
+    };
   }
 
-  function showLogin() {
+  function showLogin(step) {
     loginScreen.style.display = 'block';
     mainApp.style.display     = 'none';
+    goToStep(step || 1);
   }
 
   function showApp() {
@@ -312,49 +393,91 @@
     mainApp.style.display     = 'block';
   }
 
-  // ページ読み込み時: セッションにコードがあればそのまま表示
-  if (getAccessCode()) {
+  function goToStep(n) {
+    step1El.style.display = n === 1 ? 'block' : 'none';
+    step2El.style.display = n === 2 ? 'block' : 'none';
+    dot1.classList.toggle('active', n >= 1);
+    dot2.classList.toggle('active', n >= 2);
+    loginError.textContent = '';
+  }
+
+  function setButtonLoading(btn, loading, defaultLabel) {
+    btn.disabled = loading;
+    btn.querySelector('span').textContent = loading ? '送信中...' : defaultLabel;
+  }
+
+  // ページ読み込み時: セッションが残っていればそのまま表示
+  const { email: savedEmail, sessionToken: savedToken } = getSession();
+  if (savedEmail && savedToken) {
     showApp();
     loadStudents();
   } else {
-    showLogin();
+    showLogin(1);
   }
 
-  loginButton.onclick = () => {
-    const code = codeInput.value.trim();
-    if (!code) { loginError.textContent = 'コードを入力してください。'; return; }
+  // Step1: メールアドレス送信
+  sendOtpButton.onclick = () => {
+    const email = emailInput.value.trim();
+    if (!email) { loginError.textContent = 'メールアドレスを入力してください。'; return; }
 
-    loginButton.disabled     = true;
-    loginError.textContent   = '';
-    loginButton.querySelector('span').textContent = '確認中...';
+    setButtonLoading(sendOtpButton, true, '認証コードを送信');
+    loginError.textContent = '';
 
-    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyCode', code }) })
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'requestOTP', email }) })
       .then(res => res.json())
       .then(result => {
+        setButtonLoading(sendOtpButton, false, '認証コードを送信');
         if (result.success) {
-          sessionStorage.setItem('accessCode', code);
-          showApp();
-          loadStudents();
+          sentEmailLabel.textContent = email;
+          goToStep(2);
+          otpInput.focus();
         } else {
-          loginError.textContent = result.message || '無効なコードです。';
-          loginButton.disabled   = false;
-          loginButton.querySelector('span').textContent = 'ログイン';
+          loginError.textContent = result.message || 'エラーが発生しました。';
         }
       })
       .catch(() => {
+        setButtonLoading(sendOtpButton, false, '認証コードを送信');
         loginError.textContent = '通信エラーが発生しました。';
-        loginButton.disabled   = false;
-        loginButton.querySelector('span').textContent = 'ログイン';
       });
   };
 
-  codeInput.addEventListener('keydown', e => { if (e.key === 'Enter') loginButton.click(); });
+  // Step2: OTP検証
+  verifyOtpButton.onclick = () => {
+    const email = emailInput.value.trim();
+    const otp   = otpInput.value.trim();
+    if (!otp) { loginError.textContent = '認証コードを入力してください。'; return; }
+
+    setButtonLoading(verifyOtpButton, true, 'ログイン');
+    loginError.textContent = '';
+
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'verifyOTP', email, otp }) })
+      .then(res => res.json())
+      .then(result => {
+        setButtonLoading(verifyOtpButton, false, 'ログイン');
+        if (result.success) {
+          sessionStorage.setItem('sessionEmail', email);
+          sessionStorage.setItem('sessionToken', result.sessionToken);
+          showApp();
+          loadStudents();
+        } else {
+          loginError.textContent = result.message || '認証に失敗しました。';
+        }
+      })
+      .catch(() => {
+        setButtonLoading(verifyOtpButton, false, 'ログイン');
+        loginError.textContent = '通信エラーが発生しました。';
+      });
+  };
+
+  document.getElementById('backToStep1').onclick = () => goToStep(1);
+  emailInput.addEventListener('keydown', e => { if (e.key === 'Enter') sendOtpButton.click(); });
+  otpInput.addEventListener('keydown',   e => { if (e.key === 'Enter') verifyOtpButton.click(); });
 
   // ── 認証エラー時にログイン画面へ戻す ────────────────────
   function handleAuthError() {
-    sessionStorage.removeItem('accessCode');
-    showLogin();
-    codeInput.value        = '';
+    sessionStorage.removeItem('sessionEmail');
+    sessionStorage.removeItem('sessionToken');
+    showLogin(1);
     loginError.textContent = 'セッションが無効です。再度ログインしてください。';
   }
 
@@ -375,7 +498,7 @@
   function loadStudents() {
     studentSelect.innerHTML = '<option value="">-- 読み込み中... --</option>';
 
-    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents', code: getAccessCode() }) })
+    fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'getStudents', ...getSession() }) })
       .then(res => res.json())
       .then(result => {
         if (result.authError) { handleAuthError(); return; }
@@ -434,12 +557,12 @@
     const studentId = studentSelect.value.trim();
 
     if (!category) {
-      statusDisplay.textContent = '⚠️ 区分を選択してください。';
+      statusDisplay.textContent = '区分を選択してください。';
       statusDisplay.className = '';
       return;
     }
     if (!studentId) {
-      statusDisplay.textContent = '⚠️ 学生を選択してください。';
+      statusDisplay.textContent = '学生を選択してください。';
       statusDisplay.className = '';
       return;
     }
@@ -464,14 +587,14 @@
         recordButton.disabled = false;
         stopButton.disabled   = true;
         saveButton.disabled   = false;
-        statusDisplay.textContent = '✅ 録音停止。再生確認後、保存してください。';
+        statusDisplay.textContent = '録音停止。再生確認後、保存してください。';
         statusDisplay.className = 'success';
         audioChunks = [];
       };
 
       audioChunks = [];
       mediaRecorder.start();
-      statusDisplay.textContent = '🎤 録音中... お話しください！';
+      statusDisplay.textContent = '録音中...';
       statusDisplay.className = 'recording';
       recordButton.disabled    = true;
       stopButton.disabled      = false;
@@ -483,7 +606,7 @@
 
     } catch (err) {
       console.error("マイクアクセスエラー:", err);
-      statusDisplay.textContent = '❌ マイクにアクセスできませんでした。ブラウザの設定を確認してください。';
+      statusDisplay.textContent = 'マイクにアクセスできませんでした。ブラウザの設定を確認してください。';
       statusDisplay.className = '';
     }
   };
@@ -504,17 +627,17 @@
   // ── 保存 ───────────────────────────────────────────────
   saveButton.onclick = () => {
     if (!originalAudioBlob) {
-      statusDisplay.textContent = '⚠️ 保存する録音データがありません。';
+      statusDisplay.textContent = '保存する録音データがありません。';
       return;
     }
 
     const fileName = generateFileName();
     if (!fileName) {
-      statusDisplay.textContent = '⚠️ 区分と学生を確認してください。';
+      statusDisplay.textContent = '区分と学生を確認してください。';
       return;
     }
 
-    statusDisplay.textContent = '📤 ドライブに保存中...';
+    statusDisplay.textContent = 'Drive に保存中...';
     statusDisplay.className = '';
     saveButton.disabled     = true;
     recordButton.disabled   = true;
@@ -528,18 +651,18 @@
         body: JSON.stringify({
           audioDataUrl: reader.result,
           baseFileName: fileName,
-          code: getAccessCode()
+          ...getSession()
         })
       })
       .then(res => res.json())
       .then(response => {
         if (response.authError) { handleAuthError(); return; }
         if (response.success) {
-          statusDisplay.textContent = '🎉 ' + response.message;
+          statusDisplay.textContent = response.message;
           statusDisplay.className = 'success';
           saveButton.disabled = true;
         } else {
-          statusDisplay.textContent = `❌ 保存失敗: ${response.message}`;
+          statusDisplay.textContent = `保存失敗: ${response.message}`;
           statusDisplay.className = '';
           saveButton.disabled = false;
         }
@@ -548,7 +671,7 @@
         studentSelect.disabled  = false;
       })
       .catch(error => {
-        statusDisplay.textContent = `❌ 通信エラー: ${error.message}`;
+        statusDisplay.textContent = `通信エラー: ${error.message}`;
         statusDisplay.className = '';
         saveButton.disabled     = false;
         recordButton.disabled   = false;

@@ -222,7 +222,7 @@
     <header>
       <div class="logo-arc"></div>
       <div class="header-text">
-        <div class="college-name-en">Kamiyama Marugoto College</div>
+        <div class="college-name-en" style="letter-spacing:0.08em; text-transform:none;">神山まるごと高専</div>
         <h1>面談録音ツール</h1>
       </div>
       <div class="header-line"></div>
@@ -263,7 +263,15 @@
           </select>
         </div>
       </div>
-      <div class="filename-preview" id="filenamePreview">区分と学生を選択してください</div>
+      <div class="input-group">
+        <label>担当スタッフ</label>
+        <div class="select-wrapper">
+          <select id="staffSelect">
+            <option value="">-- 選択してください --</option>
+          </select>
+        </div>
+      </div>
+      <div class="filename-preview" id="filenamePreview">区分・学生・スタッフを選択してください</div>
 
       <div class="button-group">
         <button id="recordButton">録音開始</button>
@@ -282,7 +290,7 @@
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'studentSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
+      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) els[id] = el;
@@ -295,6 +303,7 @@
       if (els.saveButton) els.saveButton.onclick = uploadAudio;
       if (els.categorySelect) els.categorySelect.onchange = updatePreview;
       if (els.studentSelect) els.studentSelect.onchange = updatePreview;
+      if (els.staffSelect) els.staffSelect.onchange = updatePreview;
 
       checkSession();
     });
@@ -337,6 +346,7 @@
         els.loginView.classList.add('hidden');
         els.mainView.classList.remove('hidden');
         loadStudents();
+        loadStaff();
       } else {
         els.loginView.classList.remove('hidden');
         els.mainView.classList.add('hidden');
@@ -371,18 +381,41 @@
       }
     }
 
+    async function loadStaff() {
+      try {
+        const res = await callGas({
+          action: 'getStaff',
+          email: localStorage.getItem('email'),
+          sessionToken: localStorage.getItem('token')
+        });
+        if (res.authError) return;
+        els.staffSelect.innerHTML = '<option value="">-- 選択してください --</option>';
+        res.forEach(name => {
+          const opt = document.createElement('option');
+          opt.value = name;
+          opt.textContent = name;
+          els.staffSelect.appendChild(opt);
+        });
+        updatePreview();
+      } catch (e) {
+        els.staffSelect.innerHTML = '<option value="">取得失敗</option>';
+      }
+    }
+
     function updatePreview() {
-      const cat = els.categorySelect.value;
-      const sid = els.studentSelect.value;
-      const now = new Date();
+      const cat   = els.categorySelect.value;
+      const sid   = els.studentSelect.value;
+      const staff = els.staffSelect ? els.staffSelect.value : '';
+      const now   = new Date();
       const dateStr = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-      const fname = sid ? `${cat}_${sid}_${dateStr}.mp3` : "";
-      els.filenamePreview.innerHTML = fname ? `FILE: <b>${fname}</b>` : "区分と学生を選択してください";
+      const fname = (sid && staff) ? `${cat}_${sid}_${dateStr}_${staff}.mp3` : "";
+      els.filenamePreview.innerHTML = fname ? `FILE: <b>${fname}</b>` : "区分・学生・スタッフを選択してください";
       return fname;
     }
 
     async function startRecording() {
       if (!els.studentSelect.value) return alert("学生を選択してください");
+      if (!els.staffSelect || !els.staffSelect.value) return alert("担当スタッフを選択してください");
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);

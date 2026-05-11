@@ -191,6 +191,47 @@
     .hidden {
       display: none;
     }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 100;
+    }
+
+    .modal-box {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      border: 2px solid #000;
+      padding: 40px;
+      z-index: 101;
+      width: 90%;
+      max-width: 420px;
+      font-family: var(--font-main);
+    }
+
+    .modal-label {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin: 0 0 24px;
+    }
+
+    .modal-script {
+      background: #f8f8f8;
+      border-left: 3px solid #000;
+      padding: 16px 20px;
+      margin-bottom: 30px;
+      font-size: 15px;
+      line-height: 2.2;
+    }
+
+    .modal-script p {
+      margin: 0;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 </head>
@@ -266,6 +307,21 @@
     <div id="status"></div>
   </div>
 
+  <div id="recordModal" class="hidden">
+    <div class="modal-overlay"></div>
+    <div class="modal-box">
+      <p class="modal-label">録音前に、お互いに声で名乗ってください</p>
+      <div class="modal-script">
+        <p>「私が <strong id="modalStaffName"></strong> です。」</p>
+        <p>「自分が <strong id="modalStudentName"></strong> です。」</p>
+      </div>
+      <div class="button-group" style="margin:0;">
+        <button id="modalCancelBtn">キャンセル</button>
+        <button id="modalStartBtn">録音を開始する</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxyUSb1XF1T3BjNN2WI_mQ-gpYRKXyUpcSplAWoFcEjUiPXE5nalpv_pj-4Gp-o9C6v/exec";
 
@@ -273,7 +329,7 @@
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
+      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback', 'recordModal', 'modalStaffName', 'modalStudentName', 'modalCancelBtn', 'modalStartBtn'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) els[id] = el;
@@ -281,8 +337,10 @@
 
       if (els.otpRequestBtn) els.otpRequestBtn.onclick = requestOTP;
       if (els.verifyBtn) els.verifyBtn.onclick = verifyOTP;
-      if (els.recordButton) els.recordButton.onclick = startRecording;
-      if (els.stopButton) els.stopButton.onclick = stopRecording;
+      if (els.recordButton)    els.recordButton.onclick    = startRecording;
+      if (els.stopButton)      els.stopButton.onclick      = stopRecording;
+      if (els.modalCancelBtn)  els.modalCancelBtn.onclick  = closeRecordModal;
+      if (els.modalStartBtn)   els.modalStartBtn.onclick   = startRecordingActual;
       if (els.saveButton) els.saveButton.onclick = uploadAudio;
       if (els.categorySelect) els.categorySelect.onchange = onCategoryChange;
       if (els.categoryDetail) els.categoryDetail.oninput = updatePreview;
@@ -355,6 +413,7 @@
         res.forEach(s => {
           const opt = document.createElement('option');
           opt.value = s.id;
+          opt.dataset.name = s.name;
           opt.textContent = `${s.id} ${s.name}`;
           els.studentSelect.appendChild(opt);
         });
@@ -409,6 +468,18 @@
     async function startRecording() {
       if (!els.studentSelect.value) return alert("学生を選択してください");
       if (!els.staffSelect || !els.staffSelect.value) return alert("担当スタッフを選択してください");
+      const selectedOpt = els.studentSelect.options[els.studentSelect.selectedIndex];
+      els.modalStaffName.textContent    = els.staffSelect.value;
+      els.modalStudentName.textContent  = selectedOpt.dataset.name || selectedOpt.textContent.split(' ').slice(1).join(' ');
+      els.recordModal.classList.remove('hidden');
+    }
+
+    function closeRecordModal() {
+      els.recordModal.classList.add('hidden');
+    }
+
+    async function startRecordingActual() {
+      closeRecordModal();
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);

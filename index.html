@@ -227,11 +227,16 @@
         <label>区分</label>
         <div class="select-wrapper">
           <select id="categorySelect">
-            <option value="学生面談">学生面談</option>
-            <option value="まるさぽ">まるさぽ</option>
             <option value="クラマネ面談">クラマネ面談</option>
+            <option value="まるさぽ">まるさぽ</option>
+            <option value="学生面談">学生面談</option>
+            <option value="その他">その他</option>
           </select>
         </div>
+      </div>
+      <div class="input-group hidden" id="categoryDetailGroup">
+        <label>詳細</label>
+        <input type="text" id="categoryDetail" placeholder="区分の詳細を入力">
       </div>
       <div class="input-group">
         <label>学生</label>
@@ -268,7 +273,7 @@
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
     document.addEventListener('DOMContentLoaded', () => {
-      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
+      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) els[id] = el;
@@ -279,7 +284,8 @@
       if (els.recordButton) els.recordButton.onclick = startRecording;
       if (els.stopButton) els.stopButton.onclick = stopRecording;
       if (els.saveButton) els.saveButton.onclick = uploadAudio;
-      if (els.categorySelect) els.categorySelect.onchange = updatePreview;
+      if (els.categorySelect) els.categorySelect.onchange = onCategoryChange;
+      if (els.categoryDetail) els.categoryDetail.oninput = updatePreview;
       if (els.studentSelect) els.studentSelect.onchange = updatePreview;
       if (els.staffSelect) els.staffSelect.onchange = updatePreview;
 
@@ -359,6 +365,13 @@
       }
     }
 
+    function onCategoryChange() {
+      const isOther = els.categorySelect.value === 'その他';
+      els.categoryDetailGroup.classList.toggle('hidden', !isOther);
+      if (!isOther) els.categoryDetail.value = '';
+      updatePreview();
+    }
+
     async function loadStaff() {
       try {
         const res = await callGas({
@@ -381,12 +394,14 @@
     }
 
     function updatePreview() {
-      const cat   = els.categorySelect.value;
-      const sid   = els.studentSelect.value;
-      const staff = els.staffSelect ? els.staffSelect.value : '';
-      const now   = new Date();
+      const catBase = els.categorySelect.value;
+      const detail  = (catBase === 'その他' && els.categoryDetail.value.trim()) ? els.categoryDetail.value.trim() : '';
+      const cat     = detail ? `その他(${detail})` : catBase;
+      const sid     = els.studentSelect.value;
+      const staff   = els.staffSelect ? els.staffSelect.value : '';
+      const now     = new Date();
       const dateStr = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-      const fname = (sid && staff) ? `${cat}_${sid}_${dateStr}_${staff}.mp3` : "";
+      const fname   = (sid && staff) ? `${cat}_${sid}_${dateStr}_${staff}.mp3` : "";
       els.filenamePreview.innerHTML = fname ? `FILE: <b>${fname}</b>` : "区分・学生・スタッフを選択してください";
       return fname;
     }

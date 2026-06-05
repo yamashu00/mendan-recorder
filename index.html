@@ -270,6 +270,13 @@
     </div>
 
     <div id="mainView" class="hidden">
+      <div id="restoreBanner" class="hidden" style="border:1.5px solid #000; background:#FFFDE7; padding:18px; margin-bottom:30px; font-size:12px; letter-spacing:0.02em;">
+        <p style="margin:0 0 14px; font-weight:700;">未保存の録音データが見つかりました</p>
+        <div class="button-group" style="margin:0;">
+          <button id="restoreBtn">復元する</button>
+          <button id="discardBtn">破棄する</button>
+        </div>
+      </div>
       <div class="input-group">
         <label>区分</label>
         <div class="select-wrapper">
@@ -335,8 +342,63 @@
     let els = {};
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
 
+    // IndexedDB: ウィンドウを閉じても録音データを保持する
+    const IDB_NAME = 'recordingDB', IDB_STORE = 'pending';
+    function openDB() {
+      return new Promise((res, rej) => {
+        const r = indexedDB.open(IDB_NAME, 1);
+        r.onupgradeneeded = e => e.target.result.createObjectStore(IDB_STORE);
+        r.onsuccess = e => res(e.target.result);
+        r.onerror = () => rej(r.error);
+      });
+    }
+    async function idbPut(key, val) {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(val, key);
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+    }
+    async function idbGet(key) {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const r = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(key);
+        r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+      });
+    }
+    async function idbClear() {
+      const db = await openDB();
+      return new Promise((res, rej) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).clear();
+        tx.oncomplete = res; tx.onerror = () => rej(tx.error);
+      });
+    }
+    async function checkPendingRecording() {
+      try {
+        const blob = await idbGet('blob');
+        if (blob && els.restoreBanner) els.restoreBanner.classList.remove('hidden');
+      } catch (e) {}
+    }
+    async function restoreRecording() {
+      try {
+        const blob = await idbGet('blob');
+        if (blob) {
+          originalBlob = blob;
+          els.saveButton.disabled = false;
+          updateStatus("RESTORED — 保存してください");
+        }
+      } catch (e) { updateStatus("復元に失敗しました"); }
+      els.restoreBanner.classList.add('hidden');
+    }
+    async function discardRecording() {
+      await idbClear().catch(() => {});
+      els.restoreBanner.classList.add('hidden');
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback', 'recordModal', 'modalStaffName', 'modalStudentName', 'modalCancelBtn', 'modalStartBtn'];
+      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback', 'recordModal', 'modalStaffName', 'modalStudentName', 'modalCancelBtn', 'modalStartBtn', 'restoreBanner', 'restoreBtn', 'discardBtn'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) els[id] = el;
@@ -348,13 +410,19 @@
       if (els.stopButton)      els.stopButton.onclick      = stopRecording;
       if (els.modalCancelBtn)  els.modalCancelBtn.onclick  = closeRecordModal;
       if (els.modalStartBtn)   els.modalStartBtn.onclick   = startRecordingActual;
-      if (els.saveButton) els.saveButton.onclick = uploadAudio;
+      if (els.saveButton)      els.saveButton.onclick      = uploadAudio;
+      if (els.restoreBtn)      els.restoreBtn.onclick      = restoreRecording;
+      if (els.discardBtn)      els.discardBtn.onclick      = discardRecording;
       if (els.categorySelect) els.categorySelect.onchange = onCategoryChange;
       if (els.categoryDetail) els.categoryDetail.oninput = updatePreview;
       if (els.studentSelect) els.studentSelect.onchange = updatePreview;
       if (els.staffSelect) els.staffSelect.onchange = updatePreview;
 
       checkSession();
+
+      window.addEventListener('beforeunload', e => {
+        if (originalBlob) { e.preventDefault(); e.returnValue = ''; }
+      });
     });
 
     function updateStatus(msg) {
@@ -396,6 +464,7 @@
         els.mainView.classList.remove('hidden');
         loadStudents();
         loadStaff();
+        checkPendingRecording();
       } else {
         els.loginView.classList.remove('hidden');
         els.mainView.classList.add('hidden');
@@ -487,6 +556,7 @@
 
     async function startRecordingActual() {
       closeRecordModal();
+      await idbClear().catch(() => {});
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         mediaRecorder = new MediaRecorder(stream);
@@ -494,6 +564,7 @@
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
           originalBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          idbPut('blob', originalBlob).catch(() => {});
           els.saveButton.disabled = false;
           els.recordButton.classList.remove('recording-state');
           els.recordButton.textContent = '録音開始';
@@ -531,6 +602,8 @@
             sessionToken: localStorage.getItem('token')
           });
           if (res.success) {
+            originalBlob = null;
+            await idbClear().catch(() => {});
             updateStatus("COMPLETED ✓");
           } else {
             updateStatus("ERROR: " + res.message);

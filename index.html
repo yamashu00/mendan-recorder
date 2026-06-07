@@ -386,8 +386,8 @@
         const blob = await idbGet('blob');
         if (blob) {
           originalBlob = blob;
-          els.saveButton.disabled = false;
-          updateStatus("RESTORED — 保存してください");
+          updateStatus("RESTORED — 学生・スタッフを確認して保存してください");
+          await applyRestoredMeta();
         }
       } catch (e) { updateStatus("復元に失敗しました"); }
       els.restoreBanner.classList.add('hidden');
@@ -395,6 +395,23 @@
     async function discardRecording() {
       await idbClear().catch(() => {});
       els.restoreBanner.classList.add('hidden');
+    }
+    async function applyRestoredMeta() {
+      try {
+        const meta = await idbGet('meta');
+        if (!meta) return;
+        if (els.categorySelect && meta.category) {
+          els.categorySelect.value = meta.category;
+          onCategoryChange();
+        }
+        if (els.categoryDetail && meta.detail) els.categoryDetail.value = meta.detail;
+        if (els.studentSelect && meta.studentId) els.studentSelect.value = meta.studentId;
+        if (els.staffSelect && meta.staffName)   els.staffSelect.value   = meta.staffName;
+        updatePreview();
+        if (originalBlob && els.studentSelect.value && els.staffSelect && els.staffSelect.value) {
+          els.saveButton.disabled = false;
+        }
+      } catch (e) {}
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -495,6 +512,7 @@
         });
         updateStatus("READY ✓");
         updatePreview();
+        applyRestoredMeta();
       } catch (e) {
         updateStatus("CONNECTION ERROR");
       }
@@ -523,6 +541,7 @@
           els.staffSelect.appendChild(opt);
         });
         updatePreview();
+        applyRestoredMeta();
       } catch (e) {
         els.staffSelect.innerHTML = '<option value="">取得失敗</option>';
       }
@@ -565,6 +584,12 @@
         mediaRecorder.onstop = () => {
           originalBlob = new Blob(audioChunks, { type: 'audio/webm' });
           idbPut('blob', originalBlob).catch(() => {});
+          idbPut('meta', {
+            category:  els.categorySelect.value,
+            detail:    els.categoryDetail ? els.categoryDetail.value : '',
+            studentId: els.studentSelect.value,
+            staffName: els.staffSelect ? els.staffSelect.value : ''
+          }).catch(() => {});
           els.saveButton.disabled = false;
           els.recordButton.classList.remove('recording-state');
           els.recordButton.textContent = '録音開始';

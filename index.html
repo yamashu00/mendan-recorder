@@ -238,6 +238,31 @@
     .modal-script p {
       margin: 0;
     }
+
+    .student-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .student-row .select-wrapper {
+      flex: 1;
+    }
+
+    .student-row .remove-btn {
+      flex: 0 0 52px;
+      padding: 0;
+      font-size: 18px;
+      background: var(--color-bg);
+    }
+
+    #addStudentBtn {
+      width: 100%;
+      padding: 12px;
+      font-size: 13px;
+      background: var(--color-bg);
+      border-style: dashed;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
 </head>
@@ -294,12 +319,18 @@
         <input type="text" id="categoryDetail" placeholder="区分の詳細を入力">
       </div>
       <div class="input-group">
-        <label>学生</label>
+        <label>面談形式</label>
         <div class="select-wrapper">
-          <select id="studentSelect">
-            <option value="">-- 選択してください --</option>
+          <select id="modeSelect">
+            <option value="1on1">1on1（学生1名）</option>
+            <option value="3on1">2on1・3on1（学生2〜3名）</option>
           </select>
         </div>
+      </div>
+      <div class="input-group">
+        <label>学生</label>
+        <div id="studentList"></div>
+        <button id="addStudentBtn" class="hidden">＋ 学生を追加</button>
       </div>
       <div class="input-group">
         <label>担当スタッフ</label>
@@ -327,7 +358,7 @@
       <p class="modal-label">お互いに名乗ってもらえると、文字起こしの精度が上がります！</p>
       <div class="modal-script">
         <p>「私が <strong id="modalStaffName"></strong> です。」</p>
-        <p>「自分が <strong id="modalStudentName"></strong> です。」</p>
+        <div id="modalStudentLines"></div>
       </div>
       <div class="button-group" style="margin:0;">
         <button id="modalCancelBtn">キャンセル</button>
@@ -341,6 +372,93 @@
 
     let els = {};
     let mediaRecorder, audioChunks = [], originalBlob = null, stream = null;
+
+    // 3on1: 学生を複数名選択できる（ファイル名では学籍番号を「-」でつなぐ）
+    const GROUP_MIN_STUDENTS = 2, GROUP_MAX_STUDENTS = 3;
+    let studentOptions = [];
+
+    function isGroupMode() {
+      return els.modeSelect.value === '3on1';
+    }
+
+    function createStudentRow(value, removable) {
+      const row = document.createElement('div');
+      row.className = 'student-row';
+      const wrap = document.createElement('div');
+      wrap.className = 'select-wrapper';
+      const sel = document.createElement('select');
+      sel.className = 'student-select';
+      sel.innerHTML = '<option value="">-- 選択してください --</option>';
+      studentOptions.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.dataset.name = s.name;
+        opt.textContent = `${s.id} ${s.name}`;
+        sel.appendChild(opt);
+      });
+      sel.value = value || '';
+      sel.onchange = updatePreview;
+      wrap.appendChild(sel);
+      row.appendChild(wrap);
+      if (removable) {
+        const btn = document.createElement('button');
+        btn.className = 'remove-btn';
+        btn.textContent = '×';
+        btn.title = 'この学生を外す';
+        btn.onclick = () => {
+          renderStudentRows(getStudentRowValues().filter((_, i) => i !== [...els.studentList.children].indexOf(row)));
+        };
+        row.appendChild(btn);
+      }
+      return row;
+    }
+
+    function getStudentRowValues() {
+      return [...els.studentList.querySelectorAll('.student-select')].map(s => s.value);
+    }
+
+    // ids: 各行の選択値。モードに応じて行数を調整して描き直す
+    function renderStudentRows(ids) {
+      let values = ids ? ids.slice() : getStudentRowValues();
+      if (isGroupMode()) {
+        while (values.length < GROUP_MIN_STUDENTS) values.push('');
+        values = values.slice(0, GROUP_MAX_STUDENTS);
+      } else {
+        values = values.slice(0, 1);
+        if (values.length === 0) values.push('');
+      }
+      els.studentList.innerHTML = '';
+      values.forEach(v => {
+        els.studentList.appendChild(createStudentRow(v, isGroupMode() && values.length > GROUP_MIN_STUDENTS));
+      });
+      els.addStudentBtn.classList.toggle('hidden', !isGroupMode() || values.length >= GROUP_MAX_STUDENTS);
+      updatePreview();
+    }
+
+    function addStudentRow() {
+      renderStudentRows([...getStudentRowValues(), '']);
+    }
+
+    function onModeChange() {
+      renderStudentRows();
+    }
+
+    // 選択済みの学生（空欄は除く）
+    function getSelectedStudents() {
+      return [...els.studentList.querySelectorAll('.student-select')]
+        .filter(s => s.value)
+        .map(s => ({ id: s.value, name: s.options[s.selectedIndex].dataset.name || '' }));
+    }
+
+    // 未選択・重複・人数不足があればメッセージを返す
+    function validateStudents() {
+      const rows = getStudentRowValues();
+      const selected = rows.filter(v => v);
+      if (selected.length < rows.length) return "学生をすべて選択してください（不要な欄は × で外してください）";
+      if (new Set(selected).size !== selected.length) return "同じ学生が重複して選択されています";
+      if (isGroupMode() && selected.length < GROUP_MIN_STUDENTS) return `複数名面談では学生を${GROUP_MIN_STUDENTS}名以上選択してください`;
+      return "";
+    }
 
     // IndexedDB: ウィンドウを閉じても録音データを保持する
     const IDB_NAME = 'recordingDB', IDB_STORE = 'pending';
@@ -405,17 +523,19 @@
           onCategoryChange();
         }
         if (els.categoryDetail && meta.detail) els.categoryDetail.value = meta.detail;
-        if (els.studentSelect && meta.studentId) els.studentSelect.value = meta.studentId;
+        if (meta.mode) els.modeSelect.value = meta.mode;
+        const ids = meta.studentIds || (meta.studentId ? [meta.studentId] : []);
+        if (studentOptions.length) renderStudentRows(ids);
         if (els.staffSelect && meta.staffName)   els.staffSelect.value   = meta.staffName;
         updatePreview();
-        if (originalBlob && els.studentSelect.value && els.staffSelect && els.staffSelect.value) {
+        if (originalBlob && !validateStudents() && els.staffSelect && els.staffSelect.value) {
           els.saveButton.disabled = false;
         }
       } catch (e) {}
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'studentSelect', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback', 'recordModal', 'modalStaffName', 'modalStudentName', 'modalCancelBtn', 'modalStartBtn', 'restoreBanner', 'restoreBtn', 'discardBtn'];
+      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'modeSelect', 'studentList', 'addStudentBtn', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback', 'recordModal', 'modalStaffName', 'modalStudentLines','modalCancelBtn', 'modalStartBtn', 'restoreBanner', 'restoreBtn', 'discardBtn'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) els[id] = el;
@@ -432,8 +552,11 @@
       if (els.discardBtn)      els.discardBtn.onclick      = discardRecording;
       if (els.categorySelect) els.categorySelect.onchange = onCategoryChange;
       if (els.categoryDetail) els.categoryDetail.oninput = updatePreview;
-      if (els.studentSelect) els.studentSelect.onchange = updatePreview;
+      if (els.modeSelect) els.modeSelect.onchange = onModeChange;
+      if (els.addStudentBtn) els.addStudentBtn.onclick = addStudentRow;
       if (els.staffSelect) els.staffSelect.onchange = updatePreview;
+
+      renderStudentRows();
 
       checkSession();
 
@@ -502,16 +625,9 @@
           checkSession();
           return;
         }
-        els.studentSelect.innerHTML = '<option value="">-- 選択してください --</option>';
-        res.forEach(s => {
-          const opt = document.createElement('option');
-          opt.value = s.id;
-          opt.dataset.name = s.name;
-          opt.textContent = `${s.id} ${s.name}`;
-          els.studentSelect.appendChild(opt);
-        });
+        studentOptions = res;
+        renderStudentRows();
         updateStatus("READY ✓");
-        updatePreview();
         applyRestoredMeta();
       } catch (e) {
         updateStatus("CONNECTION ERROR");
@@ -551,7 +667,7 @@
       const catBase = els.categorySelect.value;
       const detail  = (catBase === 'その他' && els.categoryDetail.value.trim()) ? els.categoryDetail.value.trim() : '';
       const cat     = detail ? `その他(${detail})` : catBase;
-      const sid     = els.studentSelect.value;
+      const sid     = validateStudents() ? '' : getSelectedStudents().map(s => s.id).join('-');
       const staff   = els.staffSelect ? els.staffSelect.value : '';
       const now     = new Date();
       const dateStr = String(now.getFullYear()).slice(2) + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
@@ -561,11 +677,19 @@
     }
 
     async function startRecording() {
-      if (!els.studentSelect.value) return alert("学生を選択してください");
+      const studentError = validateStudents();
+      if (studentError) return alert(studentError);
       if (!els.staffSelect || !els.staffSelect.value) return alert("担当スタッフを選択してください");
-      const selectedOpt = els.studentSelect.options[els.studentSelect.selectedIndex];
-      els.modalStaffName.textContent    = els.staffSelect.value;
-      els.modalStudentName.textContent  = selectedOpt.dataset.name || selectedOpt.textContent.split(' ').slice(1).join(' ');
+      els.modalStaffName.textContent = els.staffSelect.value;
+      els.modalStudentLines.innerHTML = '';
+      getSelectedStudents().forEach(s => {
+        const p = document.createElement('p');
+        p.append('「自分が ');
+        const strong = document.createElement('strong');
+        strong.textContent = s.name;
+        p.append(strong, ' です。」');
+        els.modalStudentLines.appendChild(p);
+      });
       els.recordModal.classList.remove('hidden');
     }
 
@@ -587,8 +711,9 @@
           idbPut('meta', {
             category:  els.categorySelect.value,
             detail:    els.categoryDetail ? els.categoryDetail.value : '',
-            studentId: els.studentSelect.value,
-            staffName: els.staffSelect ? els.staffSelect.value : ''
+            mode:       els.modeSelect.value,
+            studentIds: getStudentRowValues(),
+            staffName:  els.staffSelect ? els.staffSelect.value : ''
           }).catch(() => {});
           els.saveButton.disabled = false;
           els.recordButton.classList.remove('recording-state');
@@ -614,6 +739,7 @@
 
     async function uploadAudio() {
       const fname = updatePreview().replace('.mp3', '');
+      if (!fname) return alert(validateStudents() || "区分・学生・スタッフを選択してください");
       updateStatus("SAVING...");
       els.saveButton.disabled = true;
       try {

@@ -167,6 +167,14 @@
       margin-top: 10px;
     }
 
+    #downloadButton {
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      font-size: 13px;
+      background: var(--color-bg);
+    }
+
     #status {
       margin-top: 40px;
       font-size: 11px;
@@ -301,6 +309,7 @@
           <button id="restoreBtn">復元する</button>
           <button id="discardBtn">破棄する</button>
         </div>
+        <button id="bannerDownloadBtn" style="width:100%; margin-top:10px; padding:12px; font-size:12px; background:#FFF;">端末にダウンロード</button>
       </div>
       <div class="input-group">
         <label>区分</label>
@@ -347,6 +356,7 @@
         <button id="stopButton" disabled>停止</button>
       </div>
       <button id="saveButton" disabled>保存して送信</button>
+      <button id="downloadButton" class="hidden">録音を端末にダウンロード</button>
     </div>
 
     <div id="status"></div>
@@ -535,7 +545,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'modeSelect', 'studentList', 'addStudentBtn', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback', 'recordModal', 'modalStaffName', 'modalStudentLines','modalCancelBtn', 'modalStartBtn', 'restoreBanner', 'restoreBtn', 'discardBtn'];
+      const ids = ['loginView', 'mainView', 'emailInput', 'otpRequestBtn', 'otpSection', 'otpInput', 'verifyBtn', 'categorySelect', 'categoryDetailGroup', 'categoryDetail', 'modeSelect', 'studentList', 'addStudentBtn', 'staffSelect', 'filenamePreview', 'recordButton', 'stopButton', 'saveButton', 'status', 'audioPlayback', 'recordModal', 'modalStaffName', 'modalStudentLines','modalCancelBtn', 'modalStartBtn', 'restoreBanner', 'restoreBtn', 'discardBtn', 'bannerDownloadBtn', 'downloadButton'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) els[id] = el;
@@ -550,6 +560,8 @@
       if (els.saveButton)      els.saveButton.onclick      = uploadAudio;
       if (els.restoreBtn)      els.restoreBtn.onclick      = restoreRecording;
       if (els.discardBtn)      els.discardBtn.onclick      = discardRecording;
+      if (els.bannerDownloadBtn) els.bannerDownloadBtn.onclick = downloadRecording;
+      if (els.downloadButton)  els.downloadButton.onclick  = downloadRecording;
       if (els.categorySelect) els.categorySelect.onchange = onCategoryChange;
       if (els.categoryDetail) els.categoryDetail.oninput = updatePreview;
       if (els.modeSelect) els.modeSelect.onchange = onModeChange;
@@ -680,6 +692,12 @@
       const studentError = validateStudents();
       if (studentError) return alert(studentError);
       if (!els.staffSelect || !els.staffSelect.value) return alert("担当スタッフを選択してください");
+      // 未保存の録音があるときは、新しい録音で消える前に確認する
+      const pending = originalBlob || await idbGet('blob').catch(() => null);
+      if (pending && !confirm("まだ保存していない録音があります。新しく録音すると消えます。続けますか？\n（残す場合は「キャンセル」→「録音を端末にダウンロード」）")) {
+        els.downloadButton.classList.remove('hidden');
+        return;
+      }
       els.modalStaffName.textContent = els.staffSelect.value;
       els.modalStudentLines.innerHTML = '';
       getSelectedStudents().forEach(s => {
@@ -702,7 +720,7 @@
       await idbClear().catch(() => {});
       try {
         stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, { audioBitsPerSecond: 32000 }); // 話し声用。バックアップを小さく保つ
         audioChunks = [];
         mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
         mediaRecorder.onstop = () => {
@@ -737,64 +755,118 @@
       updateStatus("STOPPED");
     }
 
+    // 話し声用の設定：60分でも約14MB（GASの受け取り上限 約50MB・Geminiの上限 20MB に収まる）
+    const MP3_SAMPLE_RATE = 16000, MP3_KBPS = 32;
+    const MAX_UPLOAD_MB = 45;
+
     async function uploadAudio() {
       const fname = updatePreview().replace('.mp3', '');
       if (!fname) return alert(validateStudents() || "区分・学生・スタッフを選択してください");
-      updateStatus("SAVING...");
       els.saveButton.disabled = true;
       try {
+        updateStatus("CONVERTING...");
         const mp3Blob = await encodeToMp3(originalBlob);
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-          const res = await callGas({
-            audioDataUrl: reader.result,
-            baseFileName: fname,
-            email: localStorage.getItem('email'),
-            sessionToken: localStorage.getItem('token')
-          });
-          if (res.success) {
-            originalBlob = null;
-            await idbClear().catch(() => {});
-            updateStatus("COMPLETED ✓");
-          } else {
-            updateStatus("ERROR: " + res.message);
-            els.saveButton.disabled = false;
-          }
-        };
-        reader.readAsDataURL(mp3Blob);
+        const audioDataUrl = await blobToDataUrl(mp3Blob);
+        const sizeMb = audioDataUrl.length / 1024 / 1024;
+        if (sizeMb > MAX_UPLOAD_MB) {
+          throw new Error(`録音が大きすぎて送信できません（${sizeMb.toFixed(1)}MB）。「録音を端末にダウンロード」で保存してください`);
+        }
+        updateStatus(`SAVING... (${(mp3Blob.size / 1024 / 1024).toFixed(1)}MB)`);
+        const res = await callGas({
+          audioDataUrl,
+          baseFileName: fname,
+          email: localStorage.getItem('email'),
+          sessionToken: localStorage.getItem('token')
+        });
+        if (res.authError) {
+          throw new Error("ログインが切れました（別の端末でログインした可能性）。ページを再読み込みして再ログインし、「復元する」から保存してください");
+        }
+        if (!res.success) throw new Error(res.message);
+        originalBlob = null;
+        await idbClear().catch(() => {});
+        els.downloadButton.classList.add('hidden');
+        updateStatus("COMPLETED ✓");
       } catch (e) {
-        updateStatus("ERROR");
+        updateStatus("ERROR: " + (e.message || e) + " ／ 録音データは残っています");
         els.saveButton.disabled = false;
+        els.downloadButton.classList.remove('hidden');
       }
     }
 
+    // 保存できないときの最終手段：録音をそのまま端末に保存する
+    async function downloadRecording() {
+      const blob = originalBlob || await idbGet('blob').catch(() => null);
+      if (!blob) return alert("録音データが見つかりません");
+      const base = updatePreview().replace('.mp3', '') || `recording_${Date.now()}`;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = base + '.webm';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((res, rej) => {
+        const reader = new FileReader();
+        reader.onloadend = () => reader.error ? rej(reader.error) : res(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    }
+
     async function callGas(data) {
-      const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(data) });
-      return res.json();
+      let res;
+      try {
+        res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify(data) });
+      } catch (e) {
+        throw new Error("通信に失敗しました。ネットワークを確認してください");
+      }
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        throw new Error("サーバー側で処理が失敗しました（時間切れ・容量超過の可能性）");
+      }
     }
 
     async function encodeToMp3(blob) {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
-      const encoder = new lamejs.Mp3Encoder(buf.numberOfChannels, buf.sampleRate, 128);
+      // 16kHzのコンテキストでデコードすると、その場でリサンプリングされメモリも抑えられる
+      const ctx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: MP3_SAMPLE_RATE });
+      let buf;
+      try {
+        buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+      } finally {
+        if (ctx.close) ctx.close();
+      }
+      const sampleRate = buf.sampleRate;
+      const mono = toMonoInt16(buf);
+      buf = null;
+      const encoder = new lamejs.Mp3Encoder(1, sampleRate, MP3_KBPS);
       const mp3Data = [];
-      const l = toInt16(buf.getChannelData(0));
-      const r = buf.numberOfChannels > 1 ? toInt16(buf.getChannelData(1)) : null;
       const size = 1152;
-      for (let i = 0; i < l.length; i += size) {
-        const lb = l.subarray(i, i + size);
-        const rb = r ? r.subarray(i, i + size) : null;
-        const mp3 = r ? encoder.encodeBuffer(lb, rb) : encoder.encodeBuffer(lb);
+      for (let i = 0; i < mono.length; i += size) {
+        const mp3 = encoder.encodeBuffer(mono.subarray(i, i + size));
         if (mp3.length > 0) mp3Data.push(mp3);
+        // 長い録音で画面が固まらないよう、ときどき処理を譲る
+        if (i % (size * 500) === 0) {
+          updateStatus(`CONVERTING... ${Math.floor(i / mono.length * 100)}%`);
+          await new Promise(r => setTimeout(r, 0));
+        }
       }
       const flush = encoder.flush();
       if (flush.length > 0) mp3Data.push(flush);
       return new Blob(mp3Data, { type: 'audio/mpeg' });
     }
 
-    function toInt16(arr) {
-      const res = new Int16Array(arr.length);
-      for (let i = 0; i < arr.length; i++) res[i] = Math.max(-1, Math.min(1, arr[i])) * 32767;
+    function toMonoInt16(buf) {
+      const n = buf.numberOfChannels;
+      const chs = [];
+      for (let c = 0; c < n; c++) chs.push(buf.getChannelData(c));
+      const res = new Int16Array(buf.length);
+      for (let i = 0; i < buf.length; i++) {
+        let s = 0;
+        for (let c = 0; c < n; c++) s += chs[c][i];
+        res[i] = Math.max(-1, Math.min(1, s / n)) * 32767;
+      }
       return res;
     }
   </script>
